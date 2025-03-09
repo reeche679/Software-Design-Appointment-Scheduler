@@ -1,15 +1,19 @@
 <!DOCTYPE html>
-{% load static %}
+{% load static %} 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book_Appointment</title>
-    <script src="{% static 'js/main.js' %}"defer></script>
+    <title>Book Appointment</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <h1>Book_Appointment</h1>
-    <p>Appointment Scheduler placeholder homepage <a href="/">Home</a></p>
+    <h1>Book an Appointment</h1>
+
+    <form method="post" action="{% url 'book_appointment' %}">
+        {% csrf_token %}
+        {{ form.as_p }}  <!-- This should render the form fields -->
+        <button type="submit">Book Appointment</button>
+    </form>
+    <a href="{% url 'home' %}">Back to Home</a>
 </body>
 </html>
