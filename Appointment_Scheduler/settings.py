@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-ro@+$j85rw02doi3%vh#w@3(-q=a_(%a+@hcurn)xluo!=+hv=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -49,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'AppointmentWebsite.middleware.AuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'Appointment_Scheduler.urls'
@@ -56,7 +57,7 @@ ROOT_URLCONF = 'Appointment_Scheduler.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': [BASE_DIR / 'templates', BASE_DIR / 'AppointmentWebsite' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -119,11 +120,18 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-STATICFILES_DIRS =[
-    os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
 ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'login'
+
+# Add this to ensure unauthenticated users are redirected to login
+LOGIN_EXEMPT_URLS = ['login', 'register']

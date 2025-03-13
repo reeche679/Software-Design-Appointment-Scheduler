@@ -1,4 +1,8 @@
-from Appointment_Scheduler import views
+from django.contrib import admin
+from django.urls import path
+from django.contrib.auth.views import LogoutView
+from AppointmentWebsite import views
+from django.shortcuts import redirect
 
 """
 URL configuration for Appointment_Scheduler project.
@@ -16,14 +20,18 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
 
-
+def root_redirect(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    return redirect('home')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('AppointmentWebsite.urls')),
-    path('Book_Appointment/', views.Book_Appointment),
-    path('', views.homepage)
+    path('', root_redirect, name='root'),  # Handle root URL with a view function
+    path('home/', views.homepage, name='home'),  # Move homepage to /home/
+    path('accounts/login/', views.user_login, name='login'),
+    path('accounts/logout/', LogoutView.as_view(next_page='login'), name='logout'),
+    path('accounts/register/', views.register, name='register'),
+    path('book-appointment/', views.book_appointment, name='book_appointment'),
 ]
