@@ -1,0 +1,50 @@
+{% load static %} 
+
+
+{% block content %}
+<div class="container">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <h1>Faculty Time Slot Management</h1>
+    
+    <!-- Add New Time Slot Form -->
+    <div class="time-slot-form">
+        <h2>Add New Time Slot</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn">Add Time Slot</button>
+        </form>
+    </div>
+
+    <!-- Display Existing Time Slots -->
+    <div class="existing-slots">
+        <h2>Your Time Slots</h2>
+        {% if existing_slots %}
+            <table class="time-slots-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for slot in existing_slots %}
+                    <tr>
+                        <td>{{ slot.date }}</td>
+                        <td>{{ slot.start_time }}</td>
+                        <td>{{ slot.end_time }}</td>
+                        <td>{% if slot.is_available %}Available{% else %}Booked{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No time slots added yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% load static %} 
+
+
+{% block content %}
+<div class="container">
+    
+    <div class="auth-form">
+        <link rel="stylesheet" href="{% static 'css/style.css' %}">
+        <h2>Login</h2>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <p class="error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn">Login</button>
+        </form>
+        <div class="auth-links">
+            <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
