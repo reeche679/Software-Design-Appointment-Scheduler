@@ -1,0 +1,7 @@
+Django>=5.1.7
+python-dotenv>=1.0.0
+# For handling static files and templates
+whitenoise>=6.6.0
+# For database (using SQLite by default)
+# If you plan to use PostgreSQL, add:
+# psycopg2-binary>=2.9.9 

@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.contrib.auth.views import LogoutView
 from AppointmentWebsite import views
+from AppointmentWebsite.auth import user_login, user_logout, register
 from django.shortcuts import redirect
 
 """
@@ -21,17 +22,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-def root_redirect(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
-    return redirect('home')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', root_redirect, name='root'),  # Handle root URL with a view function
-    path('home/', views.homepage, name='home'),  # Move homepage to /home/
-    path('accounts/login/', views.user_login, name='login'),
-    path('accounts/logout/', LogoutView.as_view(next_page='login'), name='logout'),
-    path('accounts/register/', views.register, name='register'),
+    path('', lambda request: redirect('login'), name='root'),
+    path('home/', views.homepage, name='home'),
+    path('accounts/login/', user_login, name='login'),
+    path('accounts/logout/', user_logout, name='logout'),
+    path('accounts/register/', register, name='register'),
     path('book-appointment/', views.book_appointment, name='book_appointment'),
 ]

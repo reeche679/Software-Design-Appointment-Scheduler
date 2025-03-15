@@ -1,16 +1,21 @@
-{% load static %} 
-
-{% block content %}
-<div class="container">
-    <h1>Welcome to the Appointment Scheduler</h1>
-    <div class="user-type-selection">
-        <link rel="stylesheet" href="{% static 'css/style.css' %}">
-
-        <h2>Please select your role:</h2>
-        <div class="selection-buttons">
-            <a href="{% url 'book_appointment' %}?user_type=student" class="btn btn-primary">Student</a>
-            <a href="{% url 'book_appointment' %}?user_type=faculty" class="btn btn-primary">Faculty</a>
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Appointment Scheduler</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container">
+        <h1>Welcome to the Appointment Scheduler</h1>
+        <div class="user-type-selection">
+            <h2>Please select your role:</h2>
+            <div class="selection-buttons">
+                <a href="{% url 'book_appointment' %}?user_type=student" class="btn btn-primary">Student</a>
+                <a href="{% url 'book_appointment' %}?user_type=faculty" class="btn btn-primary">Faculty</a>
+            </div>
         </div>
     </div>
-</div>
-{% endblock %}
+</body>
+</html>

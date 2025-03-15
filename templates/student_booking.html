@@ -1,43 +1,46 @@
-{% load static %} 
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Booking - Appointment Scheduler</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container">
+        <h1>Book an Appointment</h1>
 
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
 
-{% block content %}
-<div class="container">
-    <h1>Book an Appointment</h1>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    {% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-
-    {% if available_slots %}
-        <div class="available-slots">
-            <h2>Available Time Slots</h2>
-            <div class="slots-grid">
-                {% for slot in available_slots %}
-                <div class="slot-card">
-                    <h3>{{ slot.faculty }}</h3>
-                    <p class="date">{{ slot.date }}</p>
-                    <p class="time">{{ slot.start_time }} - {{ slot.end_time }}</p>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="time_slot" value="{{ slot.id }}">
-                        <div class="form-group">
-                            <input type="text" name="client_name" placeholder="Your Name" required>
-                        </div>
-                        <button type="submit" class="btn">Book This Slot</button>
-                    </form>
+        {% if available_slots %}
+            <div class="available-slots">
+                <h2>Available Time Slots</h2>
+                <div class="slots-grid">
+                    {% for slot in available_slots %}
+                    <div class="slot-card">
+                        <h3>{{ slot.faculty.username }}</h3>
+                        <p class="date">{{ slot.date }}</p>
+                        <p class="time">{{ slot.start_time }} - {{ slot.end_time }}</p>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="time_slot" value="{{ slot.id }}">
+                            <button type="submit" class="btn">Book This Slot</button>
+                        </form>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
-        </div>
-    {% else %}
-        <div class="no-slots">
-            <p>No time slots are currently available. Please check back later.</p>
-        </div>
-    {% endif %}
-</div>
-{% endblock %}
+        {% else %}
+            <div class="no-slots">
+                <p>No time slots are currently available. Please check back later.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

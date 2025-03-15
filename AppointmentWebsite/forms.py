@@ -1,16 +1,23 @@
 from django import forms
-from .models import Appointment, TimeSlot
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from .models import TimeSlot
 
-class AppointmentForm(forms.ModelForm):
+class CustomUserCreationForm(UserCreationForm):
+    USER_TYPE_CHOICES = [
+        ('student', 'Student'),
+        ('faculty', 'Faculty')
+    ]
+    user_type = forms.ChoiceField(choices=USER_TYPE_CHOICES, required=True)
+
     class Meta:
-        model = Appointment
-        fields = ['client_name', 'appointment_date', 'service']
-    
+        model = User
+        fields = ['username', 'email', 'password1', 'password2', 'user_type']
 
 class TimeSlotForm(forms.ModelForm):
     class Meta:
         model = TimeSlot
-        fields = ['date', 'start_time', 'end_time', 'faculty']
+        fields = ['date', 'start_time', 'end_time']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
             'start_time': forms.TimeInput(attrs={'type': 'time'}),

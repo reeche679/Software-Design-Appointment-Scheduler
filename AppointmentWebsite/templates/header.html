@@ -1,0 +1,12 @@
+{% if user.is_authenticated %}
+<header class="site-header">
+    <div class="header-content">
+        <div class="user-info">
+            Welcome, {{ user.username }}
+        </div>
+        <div class="auth-buttons">
+            <a href="{% url 'logout' %}" class="btn btn-logout">Logout</a>
+        </div>
+    </div>
+</header>
+{% endif %} 

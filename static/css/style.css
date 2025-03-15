@@ -278,11 +278,45 @@ footer {
     margin-bottom: 0.5rem;
 }
 
-.auth-form input {
+.auth-form input,
+.auth-form select {
     width: 100%;
-    padding: 0.5rem;
+    padding: 12px;
+    margin: 8px 0;
     border: 1px solid #ddd;
     border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+#id_user_type {
+    height: 45px;
+    background-color: white;
+    cursor: pointer;
+    font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 1em;
+    padding-right: 40px;
+}
+
+#id_user_type:hover {
+    border-color: #666;
+}
+
+#id_user_type:focus {
+    border-color: #4CAF50;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+#id_user_type option {
+    padding: 12px;
+    font-size: 16px;
 }
 
 .auth-links {
@@ -297,4 +331,41 @@ footer {
 
 .auth-links a:hover {
     text-decoration: underline;
+}
+
+/* Header Styles */
+.site-header {
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.user-info {
+    font-weight: 500;
+    color: #333;
+}
+
+.btn-logout {
+    background-color: #dc3545;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.btn-logout:hover {
+    background-color: #c82333;
 }
