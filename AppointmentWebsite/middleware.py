@@ -5,21 +5,18 @@ from django.urls import reverse, resolve
 class AuthenticationMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
+        # Pre-compile exempt paths
+        self.exempt_paths = ['/accounts/login/', '/accounts/register/']
 
     def __call__(self, request):
-        # Get the current URL path
-        path = request.path
+        path = request.path.rstrip('/')
         
-        # If it's the root path and user is not authenticated, redirect to login
-        if path == '/' and not request.user.is_authenticated:
-            return redirect('login')
-            
-        # Allow access to login and register pages
-        if path.startswith('/accounts/'):
+        # Always allow access to login, register, and static files
+        if path in self.exempt_paths or path.startswith('/static/') or path.startswith('/accounts/'):
             return self.get_response(request)
             
-        # Redirect to login if not authenticated
+        # Handle other paths
         if not request.user.is_authenticated:
             return redirect('login')
             
-        return self.get_response(request) 
+        return self.get_response(request)

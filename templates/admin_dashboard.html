@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-content">
+        <h1 class="page-title">Admin Dashboard</h1>
+
+        <!-- Statistics Cards -->
+        <div class="stats-cards">
+            <div class="stat-card total">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Total Users</h3>
+                    <div class="stat-number">
+                        248
+                        <div class="stat-breakdown">
+                            <span class="stat-detail">Faculty: 48</span>
+                            <span class="stat-detail">Students: 200</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card upcoming">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Active Time Slots</h3>
+                    <div class="stat-number">
+                        42
+                        <span class="stat-period">This Week</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card documents">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Documents</h3>
+                    <div class="stat-number">
+                        185
+                        <div class="stat-breakdown">
+                            <span class="stat-detail">Pending: 25</span>
+                            <span class="stat-detail">Reviewed: 160</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card appointments">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Appointments</h3>
+                    <div class="stat-number">
+                        95
+                        <div class="stat-breakdown">
+                            <span class="status pending">Pending: 15</span>
+                            <span class="status approved">Approved: 80</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Section -->
+        <div class="user-management-section">
+            <div class="section-header">
+                <h2>User Management</h2>
+                <div class="section-actions">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search users...">
+                    </div>
+                    <button class="btn-add-user" data-toggle="modal" data-target="#addUserModal">
+                        <i class="fas fa-plus"></i> Add User
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-options">
+                <select class="filter-select">
+                    <option value="all">All Users</option>
+                    <option value="student">Students</option>
+                    <option value="faculty">Faculty</option>
+                </select>
+                <select class="filter-select">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div class="users-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>USER</th>
+                            <th>TYPE</th>
+                            <th>STATUS</th>
+                            <th>APPOINTMENTS</th>
+                            <th>DOCUMENTS</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="user-info">
+                                    <img src="{% static 'images/avatars/faculty1.jpg' %}" alt="Dr. Sarah Connor">
+                                    <div>
+                                        <div class="user-name">Dr. Sarah Connor</div>
+                                        <div class="user-email">s.connor@batstateu.edu.ph</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="role faculty">Faculty</span></td>
+                            <td><span class="status active">Active</span></td>
+                            <td>15 scheduled</td>
+                            <td>28 reviewed</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-edit" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="btn-view" title="View Profile"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="user-info">
+                                    <img src="{% static 'images/avatars/student1.jpg' %}" alt="John Doe">
+                                    <div>
+                                        <div class="user-name">John Doe</div>
+                                        <div class="user-email">john.doe@students.batstateu.edu.ph</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="role student">Student</span></td>
+                            <td><span class="status active">Active</span></td>
+                            <td>2 pending</td>
+                            <td>3 uploaded</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-edit" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="btn-view" title="View Profile"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+                <div class="showing-entries">Showing 1 to 10 of 248 users</div>
+                <div class="pagination">
+                    <button class="btn-page" disabled>Previous</button>
+                    <button class="btn-page active">1</button>
+                    <button class="btn-page">2</button>
+                    <button class="btn-page">3</button>
+                    <button class="btn-page">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Slots Section -->
+        <div class="time-slots-section">
+            <div class="section-header">
+                <h2>Time Slots</h2>
+                <div class="section-actions">
+                    <button class="btn-add-slot">
+                        <i class="fas fa-plus"></i> Add Time Slot
+                    </button>
+                </div>
+            </div>
+            <div class="room-filter">
+                <button class="room-btn active">All Rooms</button>
+                <button class="room-btn">CICS201</button>
+                <button class="room-btn">CICS202</button>
+                <button class="room-btn">CICS203</button>
+            </div>
+            <div class="time-slots-grid">
+                <!-- Time slots will be dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Document Management Section -->
+        <div class="documents-section">
+            <div class="section-header">
+                <h2>Recent Documents</h2>
+                <div class="section-actions">
+                    <div class="doc-filter">
+                        <select class="filter-select">
+                            <option value="all">All Types</option>
+                            <option value="thesis">Thesis</option>
+                            <option value="proposal">Proposal</option>
+                            <option value="documentation">Documentation</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="document-list">
+                <div class="document-item">
+                    <div class="document-icon">
+                        <i class="far fa-file-pdf"></i>
+                    </div>
+                    <div class="document-info">
+                        <h3>Final Thesis Draft</h3>
+                        <span class="document-meta">Uploaded by John Doe on Feb 15, 2025</span>
+                        <div class="document-tags">
+                            <span class="document-tag">Thesis</span>
+                            <span class="status pending">Pending Review</span>
+                        </div>
+                    </div>
+                    <div class="document-actions">
+                        <button class="btn-download" title="Download">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn-comment" title="Comment">
+                            <i class="fas fa-comment"></i>
+                        </button>
+                        <button class="btn-delete" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="document-comments">
+                    <div class="comments-header">
+                        <h4>Comments</h4>
+                        <label class="show-private">
+                            <input type="checkbox" id="showPrivate">
+                            Show private comments
+                        </label>
+                    </div>
+                    <div class="comment-list">
+                        <div class="comment-item private">
+                            <div class="comment-avatar">
+                                <img src="{% static 'images/avatars/faculty1.jpg' %}" alt="Dr. Sarah Connor">
+                            </div>
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <h5>Dr. Sarah Connor</h5>
+                                    <span class="comment-time">Feb 16, 2025 10:30 AM</span>
+                                    <span class="comment-badge private">Private</span>
+                                </div>
+                                <p>Please revise the methodology section and include more recent references.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="comment-form">
+                        <div class="comment-avatar">
+                            <img src="{% static 'images/avatars/faculty1.jpg' %}" alt="Faculty">
+                        </div>
+                        <div class="comment-input">
+                            <textarea placeholder="Add a comment..."></textarea>
+                            <div class="comment-actions">
+                                <label class="private-comment">
+                                    <input type="checkbox"> Mark as private
+                                </label>
+                                <button class="btn-post">Post Comment</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal" id="addUserModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New User</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <form class="user-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password1">Password</label>
+                <input type="password" id="password1" required>
+            </div>
+            <div class="form-group">
+                <label for="password2">Confirm Password</label>
+                <input type="password" id="password2" required>
+            </div>
+            <div class="form-group">
+                <label for="user_type">User Type</label>
+                <select id="user_type" required>
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-cancel">Cancel</button>
+                <button type="submit" class="btn-submit">Create User</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Appointment Trends Chart
+    const trendsCtx = document.getElementById('appointmentTrends').getContext('2d');
+    new Chart(trendsCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Appointments',
+                data: [65, 59, 80, 81, 56, 55],
+                borderColor: '#9D2235',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // User Engagement Chart
+    const engagementCtx = document.getElementById('userEngagement').getContext('2d');
+    new Chart(engagementCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Inactive', 'New'],
+            datasets: [{
+                data: [70, 20, 10],
+                backgroundColor: ['#28a745', '#dc3545', '#ffc107']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Add User Modal Handling
+    const modal = document.getElementById('addUserModal');
+    const addUserBtn = document.querySelector('.btn-add-user');
+    const closeBtn = document.querySelector('.close-modal');
+    const cancelBtn = document.querySelector('.btn-cancel');
+
+    addUserBtn.addEventListener('click', () => {
+        modal.style.display = 'block';
+    });
+
+    [closeBtn, cancelBtn].forEach(btn => {
+        btn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Form submission handling
+    const userForm = document.querySelector('.user-form');
+    userForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // Add form submission logic here
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Faculty History - Appointment Scheduler</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <style>
+        .history-item {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .history-item.approved {
+            border-left: 4px solid #4caf50;
+        }
+        .history-item.rejected {
+            border-left: 4px solid #f44336;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status-approved {
+            background-color: #4caf50;
+            color: white;
+        }
+        .status-rejected {
+            background-color: #f44336;
+            color: white;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #9D2235;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .back-button:hover {
+            background-color: #7a1a2a;
+        }
+        .student-info {
+            margin: 10px 0;
+        }
+        .file-info {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .comment-count {
+            display: inline-block;
+            background-color: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container">
+        <a href="{% url 'book_appointment' %}" class="back-button">← Back to Faculty Home</a>
+        <h1>Appointment History</h1>
+
+        {% if appointments %}
+            {% for appointment in appointments %}
+            <div class="history-item {% if appointment.status == 'Approved' %}approved{% else %}rejected{% endif %}">
+                <span class="status-badge {% if appointment.status == 'Approved' %}status-approved{% else %}status-rejected{% endif %}">
+                    {{ appointment.status }}
+                </span>
+                
+                <div class="student-info">
+                    <h3>Student: {{ appointment.student.get_full_name }}</h3>
+                    <p>Date: {{ appointment.time_slot.date }}</p>
+                    <p>Time: {{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</p>
+                    <p>Room: {{ appointment.time_slot.get_room_display }}</p>
+                </div>
+
+                {% if appointment.student_file %}
+                <div class="file-info">
+                    <h4>Submitted Document</h4>
+                    <p>Type: {{ appointment.student_file.get_file_type_display }}</p>
+                    <p>Uploaded: {{ appointment.student_file.uploaded_at|date:"F j, Y" }}</p>
+                    {% if appointment.student_file.description %}
+                    <p>Description: {{ appointment.student_file.description }}</p>
+                    {% endif %}
+                    <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-link">
+                        View Document
+                        {% if appointment.student_file.filecomment_set.exists %}
+                        <span class="comment-count">{{ appointment.student_file.filecomment_set.count }} comments</span>
+                        {% endif %}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No appointment history found.</p>
+        {% endif %}
+    </div>
+</body>
+</html> 

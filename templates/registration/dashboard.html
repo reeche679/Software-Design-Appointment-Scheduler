@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content">
+    <h1>Welcome to the BatStateU Appointment System Dashboard</h1>
+
+    <!-- My Appointments Section -->
+    <div class="section">
+        <h2>My Appointments</h2>
+        {% if upcoming_appointments %}
+            {% for appointment in upcoming_appointments %}
+                <div class="item">
+                    <div class="details">
+                        {{ appointment.time_slot.faculty.get_full_name }} - 
+                        {{ appointment.time_slot.date|date:"M d, Y" }} at {{ appointment.time_slot.start_time|time:"g:i A" }} - 
+                        Room: {{ appointment.time_slot.get_room_display }}
+                    </div>
+                    <div class="status-badge {{ appointment.status|lower }}">{{ appointment.status }}</div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="item">
+                <div class="details">No upcoming appointments</div>
+                <a href="{% url 'book_appointment' %}" class="action-link">Book Now</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Available Professors Section -->
+    <div class="section">
+        <h2>Available Professors</h2>
+        {% if available_faculty %}
+            {% for faculty in available_faculty %}
+                <div class="item">
+                    <div class="details">{{ faculty.user.get_full_name }} - {{ faculty.department|default:"Faculty" }}</div>
+                    <a href="{% url 'book_appointment' %}?faculty={{ faculty.user.id }}" class="action-link">Book</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="item">
+                <div class="details">No faculty members available at the moment</div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Messages Section -->
+    <div class="section">
+        <h2>Recent Messages</h2>
+        {% if recent_messages %}
+            {% for message in recent_messages %}
+                <div class="item">
+                    <div class="details">{{ message.sender }}: {{ message.preview }}</div>
+                    <a href="{% url 'messages' %}" class="action-link">View</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="item">
+                <div class="details">No recent messages</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .section h2 {
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+    }
+
+    .item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .item:last-child {
+        border-bottom: none;
+    }
+
+    .details {
+        flex: 1;
+        margin-right: 1rem;
+    }
+
+    .action-link {
+        background-color: #3498db;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+
+    .action-link:hover {
+        background-color: #2980b9;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        color: white;
+    }
+
+    .status-badge.pending {
+        background-color: #f1c40f;
+    }
+
+    .status-badge.approved {
+        background-color: #2ecc71;
+    }
+
+    .status-badge.rejected {
+        background-color: #e74c3c;
+    }
+
+    @media (max-width: 768px) {
+        .content {
+            padding: 1rem;
+        }
+
+        .item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .action-link {
+            align-self: stretch;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}

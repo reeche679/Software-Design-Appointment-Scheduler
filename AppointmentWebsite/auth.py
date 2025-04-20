@@ -11,14 +11,25 @@ def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            # Create UserProfile
-            UserProfile.objects.create(
-                user=user,
-                user_type=form.cleaned_data['user_type']
-            )
-            login(request, user)
-            return redirect('home')
+            try:
+                user = form.save()
+                # Create UserProfile
+                UserProfile.objects.create(
+                    user=user,
+                    user_type=form.cleaned_data['user_type']
+                )
+                login(request, user)
+                messages.success(request, 'Registration successful!')
+                return redirect('home')
+            except Exception as e:
+                messages.error(request, f'Error during registration: {str(e)}')
+                print(f'Registration error: {str(e)}')  # Debug print
+        else:
+            # Print form errors for debugging
+            print('Form errors:', form.errors)
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
     else:
         form = CustomUserCreationForm()
     return render(request, 'registration/register.html', {'form': form})

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        
+        header {
+            display: flex; /* Enable flexbox */
+            align-items: center; /* Vertically center the items */
+            justify-content: flex-start; /* Align items to the left */
+            padding: 10px;
+        }
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        #logo {
+            width: 100px; /* Adjust the width of the logo */
+            height: auto;
+            margin-right: 10px; /* Space between logo and text */
+        }
+
+        /* Style for the text */
+        h1 {
+            font-size: 1.5em;
+            color: #ffffff;
+            margin: 0; /* Remove default margin from <h1> */
+        }
+    </style>
+</head>
+<body>
+    <header>
+    <div class="logo-container"></div>
+        <img src="https://th.bing.com/th/id/R.d4daf9ff142a5118f95e18d715d1c4d3?rik=NgIOapWt%2bvtp1w&riu=http%3a%2f%2fproject.batstate-u.edu.ph%2fhr%2fpublic%2fimg%2fbsu_big.png&ehk=r%2b6uQ7zSC5ZPqMFfZcXK4HDPBnqHNItzGQAEvdz%2f%2fHU%3d&risl=&pid=ImgRaw&r=0" alt="Logo" id="logo">
+        <h1>Batangas State University</h1>
+    </div>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="#" aria-label="Go to Home Page">Home Page</a></li>
+            <li><a href="#" aria-label="View My Appointments">My Appointments</a></li>
+            <li><a href="#" aria-label="View Schedule">Schedule</a></li>
+            <li><a href="#" aria-label="View Messages">Message</a></li>
+            <li><a href="#" aria-label="Go to Profile">Profile</a></li>
+        </ul>
+    </nav>
+    <section id="content">
+        <h2>Welcome, Red Spartans!</h2>
+    </section>
+    <script src="script.js"></script>
+</body>
+</html>

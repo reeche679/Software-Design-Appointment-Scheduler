@@ -1,0 +1,516 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/faculty_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="faculty-dashboard">
+    <h1 class="dashboard-title">Welcome to the BatStateU Appointment System Dashboard</h1>
+
+    <!-- Messages Section -->
+    <div class="dashboard-card messages-card">
+        <div class="card-header">
+            <h2><i class="fas fa-envelope"></i> Student Messages</h2>
+            <div class="message-filters">
+                <button class="btn btn-filter active" data-filter="all">All</button>
+                <button class="btn btn-filter" data-filter="unread">Unread</button>
+                <button class="btn btn-filter" data-filter="read">Read</button>
+            </div>
+        </div>
+        <div class="messages-list">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="message-item {% if not message.is_read %}unread{% endif %}" data-message-id="{{ message.id }}">
+                    <div class="message-header">
+                        <div class="student-info">
+                            <img src="{% if message.student.profile_picture %}{{ message.student.profile_picture.url }}{% else %}{% static 'images/student.png' %}{% endif %}" alt="Student" class="student-avatar">
+                            <div class="student-details">
+                                <span class="student-name">{{ message.student.get_full_name }}</span>
+                                <span class="message-time">{{ message.created_at|timesince }} ago</span>
+                            </div>
+                        </div>
+                        <div class="message-actions">
+                            {% if not message.is_read %}
+                                <span class="unread-badge">New</span>
+                            {% endif %}
+                            <button class="btn btn-reply" onclick="openReplyModal('{{ message.id }}')">
+                                <i class="fas fa-reply"></i> Reply
+                            </button>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        <p>{{ message.content }}</p>
+                        {% if message.attachment %}
+                            <div class="message-attachment">
+                                <i class="fas fa-paperclip"></i>
+                                <a href="{{ message.attachment.url }}" target="_blank">View Attachment</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if message.replies.all %}
+                        <div class="message-replies">
+                            {% for reply in message.replies.all %}
+                                <div class="reply-item {% if reply.sender_type == 'faculty' %}faculty-reply{% endif %}">
+                                    <div class="reply-header">
+                                        <span class="reply-sender">{{ reply.sender.get_full_name }}</span>
+                                        <span class="reply-time">{{ reply.created_at|timesince }} ago</span>
+                                    </div>
+                                    <p class="reply-content">{{ reply.content }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-messages">
+                    <i class="fas fa-inbox"></i>
+                    <p>No messages yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h2>Upcoming Appointments</h2>
+        </div>
+        {% if upcoming_appointments %}
+            <div class="appointments-list">
+                {% for appointment in upcoming_appointments %}
+                <div class="appointment-item">
+                    <div class="appointment-info">
+                        <div class="student-info">
+                            <span class="student-name">{{ appointment.student.get_full_name }}</span>
+                            <span class="appointment-date">{{ appointment.time_slot.date|date:"F d, Y" }}</span>
+                            <span class="appointment-time">{{ appointment.time_slot.start_time|time:"g:i A" }} - {{ appointment.time_slot.end_time|time:"g:i A" }}</span>
+                            <span class="appointment-reason">Reason: {{ appointment.get_reason_display|default:"Not specified" }}</span>
+                        </div>
+                        <div class="appointment-status {{ appointment.status|lower }}">
+                            {{ appointment.status }}
+                        </div>
+                    </div>
+                    {% if appointment.status == 'Pending' %}
+                    <div class="appointment-actions">
+                        <form method="POST" action="{% url 'approve_appointment' appointment.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-approve">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                        </form>
+                        <form method="POST" action="{% url 'reject_appointment' appointment.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-reject">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-appointments">
+                <p>No upcoming appointments</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h2>Time Slot Management</h2>
+            <button class="btn btn-primary" onclick="openAddSlotModal()">
+                <i class="fas fa-plus"></i> Add Time Slot
+            </button>
+        </div>
+        <div class="time-slots">
+            {% if time_slots %}
+                {% for slot in time_slots %}
+                <div class="time-slot-card" data-slot-id="{{ slot.id }}">
+                    <div class="slot-info">
+                        <div class="slot-info-item slot-date">
+                            <i class="fas fa-calendar"></i>
+                            {{ slot.date|date:"F d, Y" }}
+                        </div>
+                        <div class="slot-info-item slot-time">
+                            <i class="fas fa-clock"></i>
+                            {{ slot.start_time|time:"g:i A" }} - {{ slot.end_time|time:"g:i A" }}
+                        </div>
+                        <div class="slot-info-item slot-room">
+                            <i class="fas fa-door-open"></i>
+                            Room {{ slot.room }}
+                        </div>
+                        <div class="slot-info-item slot-status {% if slot.is_booked %}booked{% else %}available{% endif %}">
+                            <i class="fas fa-calendar-{% if slot.is_booked %}check{% else %}alt{% endif %}"></i>
+                            {% if slot.is_booked %}Booked{% else %}Available{% endif %}
+                        </div>
+                    </div>
+                    {% if not slot.is_booked %}
+                    <button type="button" class="delete-btn" onclick="deleteTimeSlot({{ slot.id }})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-slots">
+                    <p>No time slots available</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Reply Modal -->
+<div id="replyModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Reply to Message</h2>
+            <button class="close-modal" onclick="closeReplyModal()">&times;</button>
+        </div>
+        <form id="replyForm" class="reply-form">
+            {% csrf_token %}
+            <input type="hidden" id="messageId" name="message_id">
+            <div class="form-group">
+                <label for="replyContent">Your Reply</label>
+                <textarea id="replyContent" name="content" required rows="4" placeholder="Type your reply here..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="cancel-btn" onclick="closeReplyModal()">Cancel</button>
+                <button type="submit" class="submit-btn">Send Reply</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Time Slot Modal -->
+<div id="addSlotModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Time Slot</h2>
+            <button class="close-modal" onclick="closeAddSlotModal()">&times;</button>
+        </div>
+        <form method="post" action="{% url 'add_time_slot' %}" class="add-slot-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" id="date" name="date" required min="{{ today|date:'Y-m-d' }}">
+            </div>
+            <div class="form-group">
+                <label for="start_time">Start Time</label>
+                <input type="time" id="start_time" name="start_time" required>
+            </div>
+            <div class="form-group">
+                <label for="end_time">End Time</label>
+                <input type="time" id="end_time" name="end_time" required>
+            </div>
+            <div class="form-group">
+                <label for="room">Room</label>
+                <input type="text" id="room" name="room" required placeholder="Enter room number">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="cancel-btn" onclick="closeAddSlotModal()">Cancel</button>
+                <button type="submit" class="submit-btn">Add Time Slot</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.appointment-actions {
+    margin-top: 10px;
+}
+
+.btn-approve {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.btn-reject {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.appointment-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.appointment-status.pending {
+    background-color: #ffc107;
+    color: #856404;
+}
+
+.appointment-status.approved {
+    background-color: #28a745;
+    color: white;
+}
+
+.appointment-status.rejected {
+    background-color: #dc3545;
+    color: white;
+}
+
+.appointment-reason {
+    display: block;
+    color: #6c757d;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Modal functions
+function openAddSlotModal() {
+    document.getElementById('addSlotModal').style.display = 'block';
+}
+
+function closeAddSlotModal() {
+    document.getElementById('addSlotModal').style.display = 'none';
+}
+
+// Delete time slot functionality
+function deleteTimeSlot(slotId) {
+    if (confirm('Are you sure you want to delete this time slot?')) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch(`/delete-time-slot/${slotId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (response.ok) {
+                // Remove the time slot immediately from DOM
+                const timeSlotCard = document.querySelector(`.time-slot-card[data-slot-id="${slotId}"]`);
+                if (timeSlotCard) {
+                    timeSlotCard.remove();
+                }
+                // Store the deleted slot ID in sessionStorage
+                const deletedSlots = JSON.parse(sessionStorage.getItem('deletedSlots') || '[]');
+                deletedSlots.push(slotId);
+                sessionStorage.setItem('deletedSlots', JSON.stringify(deletedSlots));
+            } else {
+                alert('Failed to delete time slot. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting time slot. Please try again.');
+        });
+    }
+}
+
+// Function to check and remove deleted slots
+function checkAndRemoveDeletedSlots() {
+    const deletedSlots = JSON.parse(sessionStorage.getItem('deletedSlots') || '[]');
+    deletedSlots.forEach(slotId => {
+        const timeSlotCard = document.querySelector(`.time-slot-card[data-slot-id="${slotId}"]`);
+        if (timeSlotCard) {
+            timeSlotCard.remove();
+        }
+    });
+}
+
+// Function to refresh time slots from server
+function refreshTimeSlots() {
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTimeSlots = doc.querySelector('.time-slots');
+            const currentTimeSlots = document.querySelector('.time-slots');
+            if (newTimeSlots && currentTimeSlots) {
+                currentTimeSlots.innerHTML = newTimeSlots.innerHTML;
+                // After refreshing, check and remove any deleted slots
+                checkAndRemoveDeletedSlots();
+            }
+        })
+        .catch(error => console.error('Error refreshing time slots:', error));
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Check for deleted slots immediately
+    checkAndRemoveDeletedSlots();
+    
+    // Set up periodic refresh
+    setInterval(refreshTimeSlots, 5000); // Check every 5 seconds
+    
+    // Listen for storage changes
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'deletedSlots') {
+            checkAndRemoveDeletedSlots();
+        }
+    });
+});
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.className === 'modal') {
+        event.target.style.display = 'none';
+    }
+}
+
+// Message related functions
+function openReplyModal(messageId) {
+    document.getElementById('messageId').value = messageId;
+    document.getElementById('replyModal').style.display = 'block';
+    
+    // Mark message as read when opening reply modal
+    markMessageAsRead(messageId);
+}
+
+function closeReplyModal() {
+    document.getElementById('replyModal').style.display = 'none';
+    document.getElementById('replyForm').reset();
+}
+
+function markMessageAsRead(messageId) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/mark-message-read/${messageId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (response.ok) {
+            const messageItem = document.querySelector(`.message-item[data-message-id="${messageId}"]`);
+            if (messageItem) {
+                messageItem.classList.remove('unread');
+                const unreadBadge = messageItem.querySelector('.unread-badge');
+                if (unreadBadge) {
+                    unreadBadge.remove();
+                }
+            }
+        }
+    })
+    .catch(error => console.error('Error marking message as read:', error));
+}
+
+// Handle message filtering
+document.querySelectorAll('.btn-filter').forEach(button => {
+    button.addEventListener('click', function() {
+        // Update active filter button
+        document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Filter messages
+        const filter = this.dataset.filter;
+        const messages = document.querySelectorAll('.message-item');
+        
+        messages.forEach(message => {
+            if (filter === 'all') {
+                message.style.display = 'block';
+            } else if (filter === 'unread') {
+                message.style.display = message.classList.contains('unread') ? 'block' : 'none';
+            } else if (filter === 'read') {
+                message.style.display = !message.classList.contains('unread') ? 'block' : 'none';
+            }
+        });
+    });
+});
+
+// Handle reply form submission
+document.getElementById('replyForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const messageId = document.getElementById('messageId').value;
+    const content = document.getElementById('replyContent').value;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/reply-to-message/${messageId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content: content }),
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Failed to send reply');
+    })
+    .then(data => {
+        // Add the new reply to the message thread
+        const messageItem = document.querySelector(`.message-item[data-message-id="${messageId}"]`);
+        if (messageItem) {
+            const repliesContainer = messageItem.querySelector('.message-replies') || 
+                                   document.createElement('div');
+            if (!messageItem.contains(repliesContainer)) {
+                repliesContainer.className = 'message-replies';
+                messageItem.appendChild(repliesContainer);
+            }
+            
+            const replyHTML = `
+                <div class="reply-item faculty-reply">
+                    <div class="reply-header">
+                        <span class="reply-sender">${data.sender_name}</span>
+                        <span class="reply-time">just now</span>
+                    </div>
+                    <p class="reply-content">${data.content}</p>
+                </div>
+            `;
+            repliesContainer.insertAdjacentHTML('beforeend', replyHTML);
+        }
+        
+        // Close the modal and reset form
+        closeReplyModal();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to send reply. Please try again.');
+    });
+});
+
+// Initialize everything when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Existing initialization code
+    // ... existing code ...
+    
+    // Set up message auto-refresh
+    setInterval(() => {
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newMessages = doc.querySelector('.messages-list');
+                const currentMessages = document.querySelector('.messages-list');
+                if (newMessages && currentMessages) {
+                    // Only update if there are actual changes
+                    if (newMessages.innerHTML !== currentMessages.innerHTML) {
+                        currentMessages.innerHTML = newMessages.innerHTML;
+                    }
+                }
+            })
+            .catch(error => console.error('Error refreshing messages:', error));
+    }, 30000); // Check every 30 seconds
+});
+</script>
+{% endblock %} 

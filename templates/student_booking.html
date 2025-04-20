@@ -4,6 +4,205 @@
 <head>
     <title>Student Booking - Appointment Scheduler</title>
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <style>
+        .booked-info {
+            background-color: #ffebee;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+        .booked-by {
+            font-weight: bold;
+            color: #c62828;
+        }
+        .booking-status {
+            font-style: italic;
+            color: #616161;
+        }
+        .room-info {
+            background-color: #e3f2fd;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            color: #1565c0;
+            font-weight: bold;
+        }
+        .file-upload-section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .file-list {
+            margin-top: 20px;
+        }
+        .file-item {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .file-item .file-type {
+            font-weight: bold;
+            color: #2196f3;
+        }
+        .file-item .file-date {
+            color: #757575;
+            font-size: 0.9em;
+        }
+        .file-item .file-status {
+            float: right;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+        }
+        .file-status.pending {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+        .file-status.approved {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .file-status.rejected {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .slot-card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .slot-status {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 8px;
+        }
+        .status-approved {
+            background-color: #4caf50;
+            color: white;
+        }
+        .status-pending {
+            background-color: #ff9800;
+            color: white;
+        }
+        .status-scheduled {
+            background-color: #2196f3;
+            color: white;
+        }
+        .booked-info {
+            margin-top: 12px;
+            padding: 8px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        .view-file-link {
+            display: inline-block;
+            background-color: #1976d2;
+            color: white !important;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .view-file-link:hover {
+            background-color: #1565c0;
+        }
+        .comment-count {
+            display: inline-block;
+            background-color: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            margin-left: 8px;
+        }
+        .pending-files, .approved-files, .rejected-files {
+            margin-bottom: 30px;
+        }
+        .pending-files h4, .approved-files h4, .rejected-files h4 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #eee;
+        }
+        .approved-files h4 {
+            color: #2e7d32;
+            border-bottom-color: #e8f5e9;
+        }
+        .rejected-files h4 {
+            color: #c62828;
+            border-bottom-color: #ffebee;
+        }
+        .file-item.approved {
+            background-color: #f8f9fa;
+            border-left: 4px solid #4caf50;
+        }
+        .file-item.rejected {
+            background-color: #fff5f5;
+            border-left: 4px solid #f44336;
+        }
+        .appointment-status-section {
+            margin-top: 40px;
+        }
+        .appointment-category {
+            margin-bottom: 30px;
+        }
+        .appointment-category h3 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .status-pending {
+            background-color: #ff9800;
+            color: white;
+        }
+        .status-approved {
+            background-color: #4caf50;
+            color: white;
+        }
+        .status-completed {
+            background-color: #2196f3;
+            color: white;
+        }
+        .status-cancelled {
+            background-color: #f44336;
+            color: white;
+        }
+        .slot-card {
+            transition: transform 0.2s ease;
+        }
+        .slot-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
 </head>
 <body>
     {% include 'header.html' %}
@@ -18,29 +217,265 @@
         </ul>
         {% endif %}
 
-        {% if available_slots %}
-            <div class="available-slots">
-                <h2>Available Time Slots</h2>
+        <!-- File Upload Section -->
+        <div class="file-upload-section">
+            <h2>Upload Required Documents</h2>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ file_form.as_p }}
+                <button type="submit" name="upload_file" class="btn">Upload File</button>
+            </form>
+
+            <div class="file-list">
+                <h3>Your Uploaded Files</h3>
+                {% if student_files %}
+                    <div class="pending-files">
+                        <h4>Pending Files</h4>
+                        {% for file in student_files %}
+                            {% if file.status == 'Pending' %}
+                            <div class="file-item">
+                                <span class="file-type">{{ file.get_file_type_display }}</span>
+                                <span class="file-status {{ file.status|lower }}">{{ file.status }}</span>
+                                <div class="file-date">Uploaded on {{ file.uploaded_at|date:"F j, Y" }}</div>
+                                {% if file.description %}
+                                <div class="file-description">{{ file.description }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="approved-files">
+                        <h4>Approved Files</h4>
+                        {% for file in student_files %}
+                            {% if file.status == 'Approved' %}
+                            <div class="file-item approved">
+                                <span class="file-type">{{ file.get_file_type_display }}</span>
+                                <span class="file-status {{ file.status|lower }}">{{ file.status }}</span>
+                                <div class="file-date">Uploaded on {{ file.uploaded_at|date:"F j, Y" }}</div>
+                                {% if file.description %}
+                                <div class="file-description">{{ file.description }}</div>
+                                {% endif %}
+                                <a href="{% url 'view_file' file.id %}" class="view-file-link">View Document and Comments</a>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="rejected-files">
+                        <h4>Rejected Files</h4>
+                        {% for file in student_files %}
+                            {% if file.status == 'Rejected' %}
+                            <div class="file-item rejected">
+                                <span class="file-type">{{ file.get_file_type_display }}</span>
+                                <span class="file-status {{ file.status|lower }}">{{ file.status }}</span>
+                                <div class="file-date">Uploaded on {{ file.uploaded_at|date:"F j, Y" }}</div>
+                                {% if file.description %}
+                                <div class="file-description">{{ file.description }}</div>
+                                {% endif %}
+                                <a href="{% url 'view_file' file.id %}" class="view-file-link">View Document and Comments</a>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No files uploaded yet. Please upload required documents before booking an appointment.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Available Time Slots -->
+        <div class="available-slots">
+            <h2>Available Time Slots</h2>
+            {% if available_slots %}
                 <div class="slots-grid">
                     {% for slot in available_slots %}
                     <div class="slot-card">
                         <h3>{{ slot.faculty.username }}</h3>
                         <p class="date">{{ slot.date }}</p>
                         <p class="time">{{ slot.start_time }} - {{ slot.end_time }}</p>
+                        <p class="room-info">Room: {{ slot.get_room_display }}</p>
+                        {% if student_files %}
                         <form method="POST">
                             {% csrf_token %}
                             <input type="hidden" name="time_slot" value="{{ slot.id }}">
-                            <button type="submit" class="btn">Book This Slot</button>
+                            <div class="form-group">
+                                <label for="student_file">Select Document:</label>
+                                <select name="student_file" id="student_file" class="form-control" required>
+                                    {% for file in pending_files %}
+                                    <option value="{{ file.id }}">{{ file.get_file_type_display }} ({{ file.uploaded_at|date:"Y-m-d" }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" name="book_slot" class="btn">Book This Slot</button>
                         </form>
+                        {% else %}
+                        <p class="warning">Please upload required documents first</p>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>
+            {% else %}
+                <div class="no-slots">
+                    <p>No time slots are currently available. Please check back later.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Booked Time Slots -->
+        <div class="appointment-status-section">
+            <h2>Your Appointments</h2>
+            
+            <!-- All Appointments -->
+            <div class="appointment-category">
+                <h3>All Appointments</h3>
+                {% if appointments.all %}
+                <div class="slots-grid">
+                        {% for appointment in appointments.all %}
+                    <div class="slot-card">
+                                <h3>{{ appointment.time_slot.faculty.get_full_name }}</h3>
+                                <p class="date">{{ appointment.time_slot.date }}</p>
+                                <p class="time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</p>
+                                <p class="room-info">Room: {{ appointment.time_slot.get_room_display }}</p>
+                        <div class="booked-info">
+                                    <span class="slot-status status-{{ appointment.status|lower }}">{{ appointment.status }}</span>
+                                    {% if appointment.student_file %}
+                            <div class="file-info">
+                                            <p>Document: {{ appointment.student_file.get_file_type_display }}</p>
+                                            <p>Uploaded: {{ appointment.student_file.uploaded_at|date:"F j, Y" }}</p>
+                                            <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-link">
+                                    View Document and Comments
+                                                {% with comment_count=appointment.student_file.comments.count %}
+                                    {% if comment_count > 0 %}
+                                    <span class="comment-count">{{ comment_count }} comment{{ comment_count|pluralize }}</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                    <p>No appointments found.</p>
+                {% endif %}
             </div>
-        {% else %}
-            <div class="no-slots">
-                <p>No time slots are currently available. Please check back later.</p>
+
+            <!-- Pending Appointments -->
+            <div class="appointment-category">
+                <h3>Pending Appointments</h3>
+                {% if appointments.pending %}
+                    <div class="slots-grid">
+                        {% for appointment in appointments.pending %}
+                            <div class="slot-card">
+                                <h3>{{ appointment.time_slot.faculty.get_full_name }}</h3>
+                                <p class="date">{{ appointment.time_slot.date }}</p>
+                                <p class="time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</p>
+                                <p class="room-info">Room: {{ appointment.time_slot.get_room_display }}</p>
+                                <div class="booked-info">
+                                    <span class="slot-status status-pending">Pending</span>
+                                    {% if appointment.student_file %}
+                                        <div class="file-info">
+                                            <p>Document: {{ appointment.student_file.get_file_type_display }}</p>
+                                            <p>Uploaded: {{ appointment.student_file.uploaded_at|date:"F j, Y" }}</p>
+                                            <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-link">View Document</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No pending appointments.</p>
+                {% endif %}
             </div>
-        {% endif %}
+
+            <!-- Approved Appointments -->
+            <div class="appointment-category">
+                <h3>Approved Appointments</h3>
+                {% if appointments.approved %}
+                    <div class="slots-grid">
+                        {% for appointment in appointments.approved %}
+                            <div class="slot-card">
+                                <h3>{{ appointment.time_slot.faculty.get_full_name }}</h3>
+                                <p class="date">{{ appointment.time_slot.date }}</p>
+                                <p class="time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</p>
+                                <p class="room-info">Room: {{ appointment.time_slot.get_room_display }}</p>
+                                <div class="booked-info">
+                                    <span class="slot-status status-approved">Approved</span>
+                                    {% if appointment.student_file %}
+                                        <div class="file-info">
+                                            <p>Document: {{ appointment.student_file.get_file_type_display }}</p>
+                                            <p>Uploaded: {{ appointment.student_file.uploaded_at|date:"F j, Y" }}</p>
+                                            <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-link">View Document</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No approved appointments.</p>
+                {% endif %}
+            </div>
+
+            <!-- Completed Appointments -->
+            <div class="appointment-category">
+                <h3>Completed Appointments</h3>
+                {% if appointments.completed %}
+                    <div class="slots-grid">
+                        {% for appointment in appointments.completed %}
+                            <div class="slot-card">
+                                <h3>{{ appointment.time_slot.faculty.get_full_name }}</h3>
+                                <p class="date">{{ appointment.time_slot.date }}</p>
+                                <p class="time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</p>
+                                <p class="room-info">Room: {{ appointment.time_slot.get_room_display }}</p>
+                                <div class="booked-info">
+                                    <span class="slot-status status-completed">Completed</span>
+                                    {% if appointment.student_file %}
+                                        <div class="file-info">
+                                            <p>Document: {{ appointment.student_file.get_file_type_display }}</p>
+                                            <p>Uploaded: {{ appointment.student_file.uploaded_at|date:"F j, Y" }}</p>
+                                            <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-link">View Document</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No completed appointments.</p>
+                {% endif %}
+            </div>
+
+            <!-- Cancelled Appointments -->
+            <div class="appointment-category">
+                <h3>Cancelled Appointments</h3>
+                {% if appointments.cancelled %}
+                    <div class="slots-grid">
+                        {% for appointment in appointments.cancelled %}
+                            <div class="slot-card">
+                                <h3>{{ appointment.time_slot.faculty.get_full_name }}</h3>
+                                <p class="date">{{ appointment.time_slot.date }}</p>
+                                <p class="time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</p>
+                                <p class="room-info">Room: {{ appointment.time_slot.get_room_display }}</p>
+                                <div class="booked-info">
+                                    <span class="slot-status status-cancelled">Cancelled</span>
+                                    {% if appointment.student_file %}
+                                        <div class="file-info">
+                                            <p>Document: {{ appointment.student_file.get_file_type_display }}</p>
+                                            <p>Uploaded: {{ appointment.student_file.uploaded_at|date:"F j, Y" }}</p>
+                                            <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-link">View Document</a>
+                </div>
+            {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No cancelled appointments.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </body>
 </html>

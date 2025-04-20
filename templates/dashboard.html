@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-content">
+        {% if active_section == 'home' %}
+        <div id="home-section">
+            <div class="welcome-section">
+                <h1 class="welcome-title">Welcome Red Spartan!</h1>
+                <p class="welcome-subtitle">Schedule your appointments with ease</p>
+                
+                <div class="action-cards">
+                    <a href="{% url 'book_appointment' %}" class="action-card">
+                        <div class="icon">
+                            <i class="far fa-calendar"></i>
+                        </div>
+                        <h3>Book Appointment</h3>
+                        <p>Schedule a new appointment</p>
+                    </a>
+                    
+                    <a href="{% url 'my_appointments' %}" class="action-card">
+                        <div class="icon">
+                            <i class="far fa-list-alt"></i>
+                        </div>
+                        <h3>My Appointments</h3>
+                        <p>View your appointments</p>
+                    </a>
+                    
+                    <a href="{% url 'profile' %}" class="action-card">
+                        <div class="icon">
+                            <i class="far fa-user"></i>
+                        </div>
+                        <h3>Profile</h3>
+                        <p>Manage your account</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% elif active_section == 'schedule' %}
+        <div id="schedule-section">
+            <!-- Schedule content will be loaded here -->
+        </div>
+        {% elif active_section == 'appointments' %}
+        <div id="appointments-section">
+            <!-- My Appointments content will be loaded here -->
+        </div>
+        {% elif active_section == 'messages' %}
+        <div id="messages-section">
+            <!-- Messages content will be loaded here -->
+        </div>
+        {% elif active_section == 'profile' %}
+        <div id="profile-section">
+            <!-- Profile content will be loaded here -->
+        </div>
+        {% else %}
+        <div id="home-section">
+            <div class="welcome-section">
+                <h1 class="welcome-title">Welcome Red Spartan!</h1>
+                <p class="welcome-subtitle">Schedule your appointments with ease</p>
+                
+                <div class="action-cards">
+                    <a href="{% url 'book_appointment' %}" class="action-card">
+                        <div class="icon">
+                            <i class="far fa-calendar"></i>
+                        </div>
+                        <h3>Book Appointment</h3>
+                        <p>Schedule a new appointment</p>
+                    </a>
+                    
+                    <a href="{% url 'my_appointments' %}" class="action-card">
+                        <div class="icon">
+                            <i class="far fa-list-alt"></i>
+                        </div>
+                        <h3>My Appointments</h3>
+                        <p>View your appointments</p>
+                    </a>
+                    
+                    <a href="{% url 'profile' %}" class="action-card">
+                        <div class="icon">
+                            <i class="far fa-user"></i>
+                        </div>
+                        <h3>Profile</h3>
+                        <p>Manage your account</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

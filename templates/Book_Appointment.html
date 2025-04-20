@@ -1,19 +1,543 @@
-<!DOCTYPE html>
-{% load static %} 
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Book Appointment</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <h1>Book an Appointment</h1>
+{% extends 'base.html' %}
+{% load static %}
+{% load appointment_filters %}
 
-    <form method="post" action="{% url 'book_appointment' %}">
-        {% csrf_token %}
-        {{ form.as_p }}  <!-- This should render the form fields -->
-        <button type="submit">Book Appointment</button>
-    </form>
-    <a href="{% url 'home' %}">Back to Home</a>
-</body>
-</html>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/book_appointment.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <h1 class="page-title">Book an Appointment</h1>
+    
+    <div class="booking-sections">
+        <!-- Calendar Section -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <h2 id="currentMonth"></h2>
+                <div class="calendar-nav">
+                    <button class="nav-btn prev" aria-label="Previous month" id="prevMonth">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="nav-btn next" aria-label="Next month" id="nextMonth">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="calendar-grid">
+                <div class="calendar-days">
+                    <span>Sun</span>
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span>Sat</span>
+                </div>
+                <div class="calendar-dates" id="calendarDates">
+                    <!-- Calendar dates will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Professors Section -->
+        <div class="available-professors-section">
+            <h2>Available Professors on {{ selected_date|date:"F d, Y" }}</h2>
+            {% if faculty_slots %}
+                <div class="professors-list">
+                    {% for faculty, slots in faculty_slots.items %}
+                        <div class="professor-card">
+                            <div class="professor-info">
+                                <div class="professor-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="professor-details">
+                                    <h3>{{ faculty.get_full_name }}</h3>
+                                    <p>{{ faculty.userprofile.department|default:"Faculty" }}</p>
+                                </div>
+                            </div>
+                            <div class="available-slots">
+                                <h4>Available Time Slots:</h4>
+                                <div class="time-slots-grid">
+                                    {% for slot in slots %}
+                                        <button class="time-slot" 
+                                                data-slot-id="{{ slot.id }}"
+                                                data-faculty="{{ faculty.get_full_name }}"
+                                                data-time="{{ slot.start_time|time:'g:i A' }} - {{ slot.end_time|time:'g:i A' }}"
+                                                data-room="{{ slot.get_room_display }}">
+                                            {{ slot.start_time|time:"g:i A" }}
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-slots-message">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>No professors available on this date.</p>
+                    <p>Please select a different date or check back later.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Appointment Status Panel -->
+        <div class="appointment-status-panel">
+            <h2 class="status-panel-title">My Appointments</h2>
+            
+            <div class="status-tabs">
+                <button class="status-tab active" data-status="all">
+                    <i class="fas fa-list"></i> All Appointments
+                </button>
+                <button class="status-tab" data-status="pending">
+                    <i class="fas fa-clock"></i> Pending
+                </button>
+                <button class="status-tab" data-status="approved">
+                    <i class="fas fa-check"></i> Approved
+                </button>
+                <button class="status-tab" data-status="rejected">
+                    <i class="fas fa-times"></i> Rejected
+                </button>
+            </div>
+            
+            <div class="appointments-container">
+                {% if appointments.all %}
+                    <!-- All Appointments -->
+                    <div class="appointments-group" data-status="all">
+                        {% for appointment in appointments.all %}
+                            <div class="appointment-card">
+                                <div class="appointment-header">
+                                    <span class="status-badge {{ appointment.status|lower }}">{{ appointment.status }}</span>
+                                    <span class="appointment-date">{{ appointment.time_slot.date|date:"F d, Y" }}</span>
+                                </div>
+                                <div class="appointment-body">
+                                    <div class="appointment-info">
+                                        <p><i class="fas fa-user-tie"></i> {{ appointment.time_slot.faculty.get_full_name }}</p>
+                                        <p><i class="fas fa-clock"></i> {{ appointment.time_slot.start_time|time:"g:i A" }} - {{ appointment.time_slot.end_time|time:"g:i A" }}</p>
+                                        <p><i class="fas fa-door-open"></i> Room {{ appointment.time_slot.room }}</p>
+                                    </div>
+                                    {% if appointment.reason %}
+                                        <div class="appointment-reason">
+                                            <p><strong>Reason:</strong> {{ appointment.reason }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pending Appointments -->
+                    <div class="appointments-group" data-status="pending">
+                        {% for appointment in appointments.pending %}
+                            <div class="appointment-card">
+                                <div class="appointment-header">
+                                    <span class="status-badge pending">Pending</span>
+                                    <span class="appointment-date">{{ appointment.time_slot.date|date:"F d, Y" }}</span>
+                                </div>
+                                <div class="appointment-body">
+                                    <div class="appointment-info">
+                                        <p><i class="fas fa-user-tie"></i> {{ appointment.time_slot.faculty.get_full_name }}</p>
+                                        <p><i class="fas fa-clock"></i> {{ appointment.time_slot.start_time|time:"g:i A" }} - {{ appointment.time_slot.end_time|time:"g:i A" }}</p>
+                                        <p><i class="fas fa-door-open"></i> Room {{ appointment.time_slot.room }}</p>
+                                    </div>
+                                    {% if appointment.reason %}
+                                        <div class="appointment-reason">
+                                            <p><strong>Reason:</strong> {{ appointment.reason }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Approved Appointments -->
+                    <div class="appointments-group" data-status="approved">
+                        {% for appointment in appointments.approved %}
+                            <div class="appointment-card">
+                                <div class="appointment-header">
+                                    <span class="status-badge approved">Approved</span>
+                                    <span class="appointment-date">{{ appointment.time_slot.date|date:"F d, Y" }}</span>
+                                </div>
+                                <div class="appointment-body">
+                                    <div class="appointment-info">
+                                        <p><i class="fas fa-user-tie"></i> {{ appointment.time_slot.faculty.get_full_name }}</p>
+                                        <p><i class="fas fa-clock"></i> {{ appointment.time_slot.start_time|time:"g:i A" }} - {{ appointment.time_slot.end_time|time:"g:i A" }}</p>
+                                        <p><i class="fas fa-door-open"></i> Room {{ appointment.time_slot.room }}</p>
+                                    </div>
+                                    {% if appointment.reason %}
+                                        <div class="appointment-reason">
+                                            <p><strong>Reason:</strong> {{ appointment.reason }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Rejected Appointments -->
+                    <div class="appointments-group" data-status="rejected">
+                        {% for appointment in appointments.rejected %}
+                            <div class="appointment-card">
+                                <div class="appointment-header">
+                                    <span class="status-badge rejected">Rejected</span>
+                                    <span class="appointment-date">{{ appointment.time_slot.date|date:"F d, Y" }}</span>
+                                </div>
+                                <div class="appointment-body">
+                                    <div class="appointment-info">
+                                        <p><i class="fas fa-user-tie"></i> {{ appointment.time_slot.faculty.get_full_name }}</p>
+                                        <p><i class="fas fa-clock"></i> {{ appointment.time_slot.start_time|time:"g:i A" }} - {{ appointment.time_slot.end_time|time:"g:i A" }}</p>
+                                        <p><i class="fas fa-door-open"></i> Room {{ appointment.time_slot.room }}</p>
+                                    </div>
+                                    {% if appointment.reason %}
+                                        <div class="appointment-reason">
+                                            <p><strong>Reason:</strong> {{ appointment.reason }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-appointments">
+                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                        <p>No appointments found</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Details Modal -->
+    <div class="appointment-details-section" id="appointmentDetails" style="display: none;">
+        <h2>Appointment Details</h2>
+        <form class="appointment-form" method="POST" action="{% url 'confirm_appointment' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="time_slot_id" id="selectedSlotId">
+            
+            <div class="selected-slot-info">
+                <p><strong>Professor:</strong> <span id="selectedFaculty"></span></p>
+                <p><strong>Time:</strong> <span id="selectedTime"></span></p>
+                <p><strong>Room:</strong> <span id="selectedRoom"></span></p>
+            </div>
+
+            <div class="form-group">
+                <label for="reason">Reason for Appointment*</label>
+                <select id="reason" name="reason" required>
+                    <option value="">Select a reason</option>
+                    <option value="consultation">Consultation</option>
+                    <option value="thesis">Thesis Defense</option>
+                    <option value="proposal">Proposal Defense</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Upload Documents</label>
+                <div class="file-upload-area" id="dropZone">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p>Drag and drop your files here or</p>
+                    <button type="button" class="browse-btn" id="browseBtn">Browse Files</button>
+                    <input type="file" hidden id="fileInput" name="documents" multiple>
+                    <p class="file-info">Supported formats: PDF, DOCX (Max. 10MB)</p>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-confirm">Confirm Appointment</button>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Existing styles */
+
+/* New styles for Appointment Status Panel */
+.appointment-status-panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.status-panel-title {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+.status-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 1rem;
+}
+
+.status-tab {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: none;
+    color: #7f8c8d;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.status-tab.active {
+    color: #3498db;
+    border-bottom: 2px solid #3498db;
+}
+
+.appointments-container {
+    display: grid;
+    gap: 1rem;
+}
+
+.appointment-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.appointment-card:hover {
+    transform: translateY(-2px);
+}
+
+.appointment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.approved {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.appointment-date {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.appointment-info {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.appointment-info p {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.appointment-info i {
+    width: 20px;
+    color: #3498db;
+    margin-right: 0.5rem;
+}
+
+.appointment-reason {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.no-appointments {
+    text-align: center;
+    padding: 2rem;
+    color: #7f8c8d;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const currentDate = new Date('{{ selected_date|date:"Y-m-d" }}');
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+    
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    function updateCalendar() {
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        const startingDay = firstDay.getDay();
+        const monthLength = lastDay.getDate();
+        
+        document.getElementById('currentMonth').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+        
+        const calendarDates = document.getElementById('calendarDates');
+        calendarDates.innerHTML = '';
+        
+        // Add empty cells for days before start of month
+        for (let i = 0; i < startingDay; i++) {
+            const emptyCell = document.createElement('span');
+            emptyCell.className = 'date disabled';
+            calendarDates.appendChild(emptyCell);
+        }
+        
+        // Add days of the month
+        for (let i = 1; i <= monthLength; i++) {
+            const dateCell = document.createElement('span');
+            dateCell.className = 'date';
+            dateCell.textContent = i;
+            
+            const cellDate = new Date(currentYear, currentMonth, i);
+            if (cellDate < new Date('{{ today|date:"Y-m-d" }}')) {
+                dateCell.classList.add('disabled');
+            } else {
+                dateCell.addEventListener('click', function() {
+                    window.location.href = `?date=${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                });
+
+                // Highlight selected date
+                if (i === currentDate.getDate() && 
+                    currentMonth === currentDate.getMonth() && 
+                    currentYear === currentDate.getFullYear()) {
+                    dateCell.classList.add('selected');
+                }
+            }
+            
+            calendarDates.appendChild(dateCell);
+        }
+    }
+
+    // Initialize calendar
+    updateCalendar();
+
+    // Month navigation
+    document.getElementById('prevMonth').addEventListener('click', function() {
+        if (currentMonth === 0) {
+            currentMonth = 11;
+            currentYear--;
+        } else {
+            currentMonth--;
+        }
+        updateCalendar();
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', function() {
+        if (currentMonth === 11) {
+            currentMonth = 0;
+            currentYear++;
+        } else {
+            currentMonth++;
+        }
+        updateCalendar();
+    });
+
+    // Time slot selection
+    const timeSlots = document.querySelectorAll('.time-slot');
+    const appointmentDetails = document.getElementById('appointmentDetails');
+    
+    timeSlots.forEach(slot => {
+        slot.addEventListener('click', function() {
+            timeSlots.forEach(s => s.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            // Update appointment details
+            document.getElementById('selectedSlotId').value = this.dataset.slotId;
+            document.getElementById('selectedFaculty').textContent = this.dataset.faculty;
+            document.getElementById('selectedTime').textContent = this.dataset.time;
+            document.getElementById('selectedRoom').textContent = this.dataset.room;
+            
+            // Show appointment details section
+            appointmentDetails.style.display = 'block';
+            appointmentDetails.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+
+    // File upload functionality
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const browseBtn = document.getElementById('browseBtn');
+
+    browseBtn.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        fileInput.files = e.dataTransfer.files;
+        updateFileList();
+    });
+
+    fileInput.addEventListener('change', updateFileList);
+
+    function updateFileList() {
+        const fileList = Array.from(fileInput.files)
+            .map(file => `<li>${file.name}</li>`)
+            .join('');
+        
+        if (fileList) {
+            dropZone.innerHTML = `
+                <ul class="file-list">${fileList}</ul>
+                <button type="button" class="browse-btn" id="browseBtn">Add More Files</button>
+            `;
+        }
+    }
+
+    // Appointment status tab functionality
+    const statusTabs = document.querySelectorAll('.status-tab');
+    const appointmentGroups = document.querySelectorAll('.appointments-group');
+    
+    statusTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Remove active class from all tabs
+            statusTabs.forEach(t => t.classList.remove('active'));
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Get the status from data attribute
+            const status = this.getAttribute('data-status');
+            
+            // Hide all appointment groups
+            appointmentGroups.forEach(group => {
+                group.style.display = 'none';
+            });
+            
+            // Show the selected appointment group
+            const selectedGroup = document.querySelector(`.appointments-group[data-status="${status}"]`);
+            if (selectedGroup) {
+                selectedGroup.style.display = 'block';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

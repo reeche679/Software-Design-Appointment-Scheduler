@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/faculty_schedule.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="schedule-container">
+    <div class="schedule-header">
+        <h1>Schedule Management</h1>
+        <button class="add-slot-btn" onclick="openAddSlotModal()">
+            <i class="fas fa-plus"></i> Add Time Slot
+        </button>
+    </div>
+
+    <div class="calendar-section">
+        <div class="calendar-nav">
+            <button class="nav-btn" id="prevMonth">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <h2 id="currentMonth">April 2025</h2>
+            <button class="nav-btn" id="nextMonth">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <div class="calendar-grid">
+            <div class="calendar-days">
+                <div class="day-header">Sun</div>
+                <div class="day-header">Mon</div>
+                <div class="day-header">Tue</div>
+                <div class="day-header">Wed</div>
+                <div class="day-header">Thu</div>
+                <div class="day-header">Fri</div>
+                <div class="day-header">Sat</div>
+            </div>
+            <div id="calendarDays" class="calendar-dates"></div>
+        </div>
+    </div>
+
+    <div class="schedule-content">
+        <div class="schedule-tabs">
+            <button class="tab-btn active" data-tab="upcoming">Upcoming Slots</button>
+            <button class="tab-btn" data-tab="past">Past Slots</button>
+        </div>
+
+        <div class="tab-content" id="upcoming">
+            {% if time_slots %}
+            <div class="time-slots">
+                {% for slot in time_slots %}
+                <div class="time-slot-card" data-slot-id="{{ slot.id }}">
+                    <div class="slot-info">
+                        <div class="slot-info-item">
+                            <i class="fas fa-calendar text-danger"></i>
+                            {{ slot.date|date:"F d, Y" }}
+                        </div>
+                        <div class="slot-info-item">
+                            <i class="fas fa-clock text-danger"></i>
+                            {{ slot.start_time|time:"g:i A" }} - {{ slot.end_time|time:"g:i A" }}
+                        </div>
+                        <div class="slot-info-item">
+                            <i class="fas fa-door-open text-danger"></i>
+                            Room {{ slot.room }}
+                        </div>
+                        <div class="slot-status {% if slot.is_booked %}booked{% else %}available{% endif %}">
+                            <i class="fas fa-calendar-{% if slot.is_booked %}check{% else %}alt{% endif %} text-success"></i>
+                            {% if slot.is_booked %}Booked{% else %}Available{% endif %}
+                        </div>
+                    </div>
+                    {% if not slot.is_booked %}
+                    <button type="button" class="delete-btn" onclick="deleteTimeSlot({{ slot.id }})">
+                        <i class="fas fa-trash text-danger"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-slots">
+                <i class="fas fa-calendar-times"></i>
+                <p>No time slots available</p>
+                <button class="add-slot-btn" onclick="openAddSlotModal()">
+                    <i class="fas fa-plus"></i> Add Your First Time Slot
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Time Slot Modal -->
+<div id="addSlotModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Time Slot</h2>
+            <button class="close-modal" onclick="closeAddSlotModal()">&times;</button>
+        </div>
+        <form method="post" action="{% url 'add_time_slot' %}" class="add-slot-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" id="date" name="date" required min="{{ today|date:'Y-m-d' }}">
+            </div>
+            <div class="form-group">
+                <label for="start_time">Start Time</label>
+                <input type="time" id="start_time" name="start_time" required>
+            </div>
+            <div class="form-group">
+                <label for="end_time">End Time</label>
+                <input type="time" id="end_time" name="end_time" required>
+            </div>
+            <div class="form-group">
+                <label for="room">Room</label>
+                <input type="text" id="room" name="room" required placeholder="Enter room number">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="cancel-btn" onclick="closeAddSlotModal()">Cancel</button>
+                <button type="submit" class="submit-btn">Add Time Slot</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calendar functionality
+    const currentDate = new Date();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+
+    function updateCalendar() {
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        const startingDay = firstDay.getDay();
+        const monthLength = lastDay.getDate();
+
+        // Update month display
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"];
+        document.getElementById('currentMonth').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+        // Clear existing calendar
+        const calendarDays = document.getElementById('calendarDays');
+        calendarDays.innerHTML = '';
+
+        // Add empty cells for days before start of month
+        for (let i = 0; i < startingDay; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.className = 'calendar-day empty';
+            calendarDays.appendChild(emptyDay);
+        }
+
+        // Add days of the month
+        for (let i = 1; i <= monthLength; i++) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day';
+            dayElement.innerHTML = `
+                <span class="date">${i}</span>
+                <div class="day-slots"></div>
+            `;
+            calendarDays.appendChild(dayElement);
+        }
+    }
+
+    // Initialize calendar
+    updateCalendar();
+
+    // Month navigation
+    document.getElementById('prevMonth').addEventListener('click', function() {
+        if (currentMonth === 0) {
+            currentMonth = 11;
+            currentYear--;
+        } else {
+            currentMonth--;
+        }
+        updateCalendar();
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', function() {
+        if (currentMonth === 11) {
+            currentMonth = 0;
+            currentYear++;
+        } else {
+            currentMonth++;
+        }
+        updateCalendar();
+    });
+
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            // Add tab switching logic here
+        });
+    });
+});
+
+// Modal functions
+function openAddSlotModal() {
+    document.getElementById('addSlotModal').style.display = 'block';
+}
+
+function closeAddSlotModal() {
+    document.getElementById('addSlotModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.className === 'modal') {
+        event.target.style.display = 'none';
+    }
+}
+
+// Delete time slot functionality
+function deleteTimeSlot(slotId) {
+    if (confirm('Are you sure you want to delete this time slot?')) {
+        fetch(`/delete-time-slot/${slotId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                // Remove the time slot card from both pages
+                const timeSlotCard = document.querySelector(`.time-slot-card[data-slot-id="${slotId}"]`);
+                if (timeSlotCard) {
+                    timeSlotCard.remove();
+                }
+                // Notify the dashboard page about the deletion
+                window.localStorage.setItem('deletedSlotId', slotId);
+                // Show success message
+                alert('Time slot deleted successfully');
+            } else {
+                throw new Error('Failed to delete time slot');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting time slot. Please try again.');
+        });
+    }
+}
+
+// Check for deleted slots from other pages
+window.addEventListener('storage', function(e) {
+    if (e.key === 'deletedSlotId') {
+        const slotId = e.newValue;
+        const timeSlotCard = document.querySelector(`.time-slot-card[data-slot-id="${slotId}"]`);
+        if (timeSlotCard) {
+            timeSlotCard.remove();
+        }
+    }
+});
+</script>
+{% endblock %} 

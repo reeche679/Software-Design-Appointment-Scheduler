@@ -1,23 +1,135 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login - Appointment Scheduler</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <div class="auth-container">
-        <div class="auth-form">
-            <h2>Login</h2>
-            <form method="post">
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="header">
+    <div class="header-content">
+        <img src="https://th.bing.com/th/id/R.d4daf9ff142a5118f95e18d715d1c4d3?rik=uuyI3A292xW2Aw&riu=http%3a%2f%2fproject.batstate-u.edu.ph%2facct%2fpublic%2fimg%2fbsu_big.png&ehk=Q4AOI4QjPJ9KtbMFM9FHXsDeuPlgr7gdYDsQ3lHa4f0%3d&risl=&pid=ImgRaw&r=0" alt="BatStateU Logo" class="header-logo">
+    </div>
+</div>
+
+<div class="login-container">
+    <div class="card shadow-lg">
+        <div class="card-body p-5">
+            <div class="text-center mb-4">
+                <h2 class="text-primary-red mb-3">Sign In</h2>
+            </div>
+
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                Your username and password didn't match. Please try again.
+            </div>
+            {% endif %}
+
+            {% if next %}
+                {% if user.is_authenticated %}
+                <div class="alert alert-warning">
+                    Your account doesn't have access to this page. To proceed,
+                    please login with an account that has access.
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    Please login to see this page.
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <form method="post" action="{% url 'login' %}">
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-primary">Login</button>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control" id="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" id="password" required>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                </div>
+                <input type="hidden" name="next" value="{{ next }}">
             </form>
-            <div class="auth-links">
-                <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'password_reset' %}" class="text-decoration-none text-primary-red">Forgot Password?</a>
+            </div>
+            <div class="text-center mt-3">
+                <p class="mb-2">Don't have an account?</p>
+                <a href="{% url 'register' %}" class="btn btn-primary">Sign Up</a>
             </div>
         </div>
     </div>
-</body>
-</html>
+</div>
+
+<style>
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-logo {
+    height: 60px;
+    width: auto;
+}
+
+.header-title {
+    color: var(--primary-red);
+    font-size: 24px;
+    margin: 0;
+    font-weight: bold;
+}
+
+.login-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.card {
+    width: 100%;
+    max-width: 400px;
+    border: none;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+.text-primary-red {
+    color: var(--primary-red);
+}
+
+.btn-primary {
+    background-color: var(--primary-red);
+    border-color: var(--primary-red);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--dark-red);
+    border-color: var(--dark-red);
+}
+
+.form-control:focus {
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 0.2rem rgba(157, 34, 53, 0.25);
+}
+</style>
+{% endblock %}

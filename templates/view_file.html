@@ -1,0 +1,210 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Document - Appointment Scheduler</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <style>
+        .file-details {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .file-info {
+            margin-bottom: 20px;
+        }
+        .file-type {
+            color: #1976d2;
+            font-weight: bold;
+        }
+        .file-date {
+            color: #616161;
+        }
+        .file-description {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        .download-button {
+            display: inline-block;
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .download-button:hover {
+            background-color: #388e3c;
+        }
+        .comments-section {
+            margin-top: 30px;
+        }
+        .comment {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        .comment.private {
+            background-color: #fff3e0;
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .comment-author {
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .comment-date {
+            color: #757575;
+            font-size: 0.9em;
+        }
+        .private-badge {
+            background-color: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+        .comment-text {
+            color: #424242;
+            line-height: 1.5;
+        }
+        .comment-form {
+            margin-top: 20px;
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .comment-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            min-height: 100px;
+        }
+        .comment-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .comment-form .checkbox-group {
+            margin: 10px 0;
+        }
+        .btn-submit {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-submit:hover {
+            background-color: #1565c0;
+        }
+        .back-button {
+            display: inline-block;
+            background-color: #9D2235;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .back-button:hover {
+            background-color: #7B1E2B;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container">
+        <div class="page-header">
+            <h2>Document Details</h2>
+            {% if is_faculty %}
+                <a href="{% url 'book_appointment' %}" class="back-button">← Back to Faculty Home</a>
+            {% else %}
+                <a href="{% url 'book_appointment' %}" class="back-button">← Back to Student Home</a>
+            {% endif %}
+        </div>
+
+        <div class="file-details">
+            <div class="file-info">
+                <h3>Document Details</h3>
+                <p><strong>Type:</strong> <span class="file-type">{{ student_file.get_file_type_display }}</span></p>
+                <p><strong>Uploaded by:</strong> {{ student_file.student.username }}</p>
+                <p><strong>Upload Date:</strong> <span class="file-date">{{ student_file.uploaded_at|date:"F j, Y" }}</span></p>
+                <p><strong>Status:</strong> {{ student_file.status }}</p>
+                {% if student_file.description %}
+                <div class="file-description">
+                    <strong>Description:</strong><br>
+                    {{ student_file.description }}
+                </div>
+                {% endif %}
+                <a href="{% url 'download_file' student_file.id %}" class="download-button">Download Document</a>
+            </div>
+        </div>
+
+        <div class="comments-section">
+            <h3>Comments</h3>
+            {% if comments %}
+                {% for comment in comments %}
+                <div class="comment {% if comment.is_private %}private{% endif %}">
+                    <div class="comment-header">
+                        <span class="comment-author">{{ comment.faculty.username }}
+                            {% if comment.is_private and is_faculty %}
+                            <span class="private-badge">Private</span>
+                            {% endif %}
+                        </span>
+                        <span class="comment-date">{{ comment.created_at|date:"F j, Y g:i A" }}</span>
+                    </div>
+                    <div class="comment-text">
+                        {{ comment.comment|linebreaks }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No comments yet.</p>
+            {% endif %}
+
+            {% if is_faculty %}
+            <div class="comment-form">
+                <h4>Add Comment</h4>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ comment_form.comment.label_tag }}
+                        {{ comment_form.comment }}
+                    </div>
+                    <div class="checkbox-group">
+                        {{ comment_form.is_private.label_tag }}
+                        {{ comment_form.is_private }}
+                        <small class="help-text">Check this if you want only faculty members to see this comment</small>
+                    </div>
+                    <button type="submit" class="btn-submit">Add Comment</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html> 

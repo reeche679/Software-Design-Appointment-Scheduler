@@ -1,55 +1,353 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Faculty Interface - Appointment Scheduler</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    {% include 'header.html' %}
-    <div class="container">
-        <h1>Faculty Time Slot Management</h1>
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>Faculty Dashboard</h1>
+        <a href="{% url 'faculty_history' %}" class="history-button">View History</a>
+    </div>
+
+    <!-- Add Time Slot Section -->
+    <div class="add-slot-section">
+        <h2>Add New Time Slot</h2>
+        <form method="POST" class="time-slot-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="submit-button">Add Time Slot</button>
+        </form>
+    </div>
+
+    <!-- Appointments Section -->
+    <div class="appointments-section">
+        <h2>Your Appointments</h2>
         
-        <!-- Add New Time Slot Form -->
-        <div class="time-slot-form">
-            <h2>Add New Time Slot</h2>
-            <form method="POST">
-                {% csrf_token %}
-                <div class="form-group">
-                    {{ form.as_p }}
+        <!-- Pending Appointments -->
+        <div class="appointment-category">
+            <h3>Pending Appointments</h3>
+            {% if appointments.pending %}
+                <div class="time-slots-grid">
+                    {% for appointment in appointments.pending %}
+                        <div class="time-slot pending">
+                            <div class="slot-date">{{ appointment.time_slot.date }}</div>
+                            <div class="slot-time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</div>
+                            <div class="slot-room">Room: {{ appointment.time_slot.get_room_display }}</div>
+                            <div class="slot-student">
+                                <strong>Student:</strong> {{ appointment.student.get_full_name }}
+                                {% if appointment.student_file %}
+                                    <div class="file-info">
+                                        <strong>Document:</strong> {{ appointment.student_file.get_file_type_display }}
+                                        <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-button">View Document</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="slot-actions">
+                                <a href="{% url 'approve_appointment' appointment.id %}" class="approve-button">Approve</a>
+                                <a href="{% url 'reject_appointment' appointment.id %}" class="reject-button">Reject</a>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
-                <button type="submit" class="btn">Add Time Slot</button>
-            </form>
+            {% else %}
+                <p>No pending appointments.</p>
+            {% endif %}
         </div>
 
-        <!-- Display Existing Time Slots -->
-        <div class="existing-slots">
-            <h2>Your Time Slots</h2>
-            {% if existing_slots %}
-                <table class="time-slots-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for slot in existing_slots %}
-                        <tr>
-                            <td>{{ slot.date }}</td>
-                            <td>{{ slot.start_time }}</td>
-                            <td>{{ slot.end_time }}</td>
-                            <td>{% if slot.is_available %}Available{% else %}Booked{% endif %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- Approved Appointments -->
+        <div class="appointment-category">
+            <h3>Approved Appointments</h3>
+            {% if appointments.approved %}
+                <div class="time-slots-grid">
+                    {% for appointment in appointments.approved %}
+                        <div class="time-slot approved">
+                            <div class="slot-date">{{ appointment.time_slot.date }}</div>
+                            <div class="slot-time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</div>
+                            <div class="slot-room">Room: {{ appointment.time_slot.get_room_display }}</div>
+                            <div class="slot-student">
+                                <strong>Student:</strong> {{ appointment.student.get_full_name }}
+                                {% if appointment.student_file %}
+                                    <div class="file-info">
+                                        <strong>Document:</strong> {{ appointment.student_file.get_file_type_display }}
+                                        <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-button">View Document</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
             {% else %}
-                <p>No time slots added yet.</p>
+                <p>No approved appointments.</p>
+            {% endif %}
+        </div>
+
+        <!-- Available Time Slots -->
+        <div class="time-slots-section">
+            <h2>Your Available Time Slots</h2>
+            {% if existing_slots %}
+                <div class="time-slots-grid">
+                    {% for slot in existing_slots %}
+                        <div class="time-slot {% if slot.is_available %}available{% else %}pending{% endif %}">
+                            <div class="slot-date">{{ slot.date }}</div>
+                            <div class="slot-time">{{ slot.start_time }} - {{ slot.end_time }}</div>
+                            <div class="slot-room">Room: {{ slot.get_room_display }}</div>
+                            {% if not slot.is_available %}
+                                <div class="slot-student">
+                                    <strong>Student:</strong> {{ slot.student_name }}
+                                    {% if slot.student_file %}
+                                        <div class="file-info">
+                                            <strong>Document:</strong> {{ slot.student_file.get_file_type_display }}
+                                            <a href="{% url 'view_file' slot.student_file.id %}" class="view-file-button">View Document</a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="slot-actions">
+                                    <a href="{% url 'approve_appointment' slot.appointment.id %}" class="approve-button">Approve</a>
+                                    <a href="{% url 'reject_appointment' slot.appointment.id %}" class="reject-button">Reject</a>
+                                </div>
+                            {% else %}
+                                <div class="slot-status">Available</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-slots">
+                    <p>No time slots available. Add some using the form above.</p>
+                </div>
             {% endif %}
         </div>
     </div>
-</body>
-</html>
+</div>
+
+<style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        padding-bottom: 100px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .history-button {
+        background-color: #9D2235;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+    .history-button:hover {
+        background-color: #7a1b2a;
+    }
+
+    .add-slot-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+
+    .time-slot-form {
+        display: grid;
+        gap: 15px;
+    }
+
+    .time-slot-form p {
+        margin: 0;
+    }
+
+    .time-slot-form label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .time-slot-form input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .submit-button {
+        background-color: #9D2235;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .submit-button:hover {
+        background-color: #7a1b2a;
+    }
+
+    .time-slots-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+    }
+
+    .time-slots-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .time-slot {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .time-slot.available {
+        border-left: 4px solid #28a745;
+    }
+
+    .time-slot.pending {
+        border-left: 4px solid #ffc107;
+    }
+
+    .slot-date {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .slot-time {
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .slot-status {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .slot-student {
+        margin: 10px 0;
+        padding: 5px;
+        background-color: #fff3cd;
+        border-radius: 4px;
+    }
+
+    .slot-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .view-file-button, .approve-button, .reject-button {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+    .view-file-button {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .view-file-button:hover {
+        background-color: #0056b3;
+    }
+
+    .approve-button {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .approve-button:hover {
+        background-color: #218838;
+    }
+
+    .reject-button {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .reject-button:hover {
+        background-color: #c82333;
+    }
+
+    .no-slots {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        color: #666;
+    }
+
+    .footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        margin-top: 40px;
+        position: relative;
+        bottom: 0;
+        width: 100%;
+    }
+
+    .table-responsive {
+        margin-bottom: 20px;
+    }
+
+    .section {
+        margin-bottom: 30px;
+    }
+
+    /* Additional styles for appointment categories */
+    .appointment-category {
+        margin-bottom: 30px;
+    }
+    
+    .appointment-category h3 {
+        color: #333;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #eee;
+    }
+    
+    .time-slot.approved {
+        border-left: 4px solid #28a745;
+    }
+    
+    .time-slot.completed {
+        border-left: 4px solid #007bff;
+    }
+    
+    .time-slot.cancelled {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .appointments-section {
+        margin-bottom: 40px;
+    }
+    
+    .file-info {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+    }
+    
+    .view-file-button {
+        display: inline-block;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}

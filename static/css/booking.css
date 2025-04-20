@@ -1,0 +1,248 @@
+/* Booking Page Styles */
+.page-title {
+    color: var(--primary-red);
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+}
+
+.booking-container {
+    display: grid;
+    gap: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Calendar Section */
+.calendar-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-header h2 {
+    font-size: 1.2rem;
+    color: var(--dark-gray);
+    margin: 0;
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: var(--dark-gray);
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+}
+
+.nav-btn:hover {
+    color: var(--primary-red);
+}
+
+.calendar-grid {
+    width: 100%;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: 500;
+    color: var(--dark-gray);
+    margin-bottom: 10px;
+}
+
+.calendar-days span {
+    padding: 10px;
+    font-size: 0.9rem;
+}
+
+.calendar-dates {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.date {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.date:hover:not(.disabled) {
+    background-color: #f0f0f0;
+}
+
+.date.disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.date.selected {
+    background-color: var(--primary-red);
+    color: white;
+}
+
+/* Time Slots Section */
+.time-slots-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.time-slots-section h2 {
+    font-size: 1.2rem;
+    color: var(--dark-gray);
+    margin-bottom: 20px;
+}
+
+.time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+}
+
+.time-slot {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-slot:hover {
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+}
+
+.time-slot.selected {
+    background-color: var(--primary-red);
+    color: white;
+    border-color: var(--primary-red);
+}
+
+/* Appointment Details Section */
+.appointment-details-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.appointment-details-section h2 {
+    font-size: 1.2rem;
+    color: var(--dark-gray);
+    margin-bottom: 20px;
+}
+
+.appointment-form .form-group {
+    margin-bottom: 20px;
+}
+
+.appointment-form label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--dark-gray);
+    font-weight: 500;
+}
+
+.appointment-form select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: var(--dark-gray);
+}
+
+.file-upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    background-color: #f9f9f9;
+}
+
+.upload-icon {
+    font-size: 2rem;
+    color: #999;
+    margin-bottom: 15px;
+}
+
+.browse-btn {
+    background-color: var(--primary-red);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 15px 0;
+    font-size: 0.9rem;
+}
+
+.file-info {
+    color: #666;
+    font-size: 0.8rem;
+    margin-top: 10px;
+}
+
+.btn-confirm {
+    background-color: var(--primary-red);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 20px;
+}
+
+.btn-confirm:hover {
+    background-color: var(--dark-red);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .booking-container {
+        gap: 20px;
+    }
+
+    .calendar-dates {
+        gap: 2px;
+    }
+
+    .date {
+        height: 35px;
+        font-size: 0.85rem;
+    }
+
+    .time-slots-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .file-upload-area {
+        padding: 20px;
+    }
+} 

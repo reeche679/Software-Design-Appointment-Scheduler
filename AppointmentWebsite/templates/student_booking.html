@@ -18,12 +18,13 @@
         </ul>
         {% endif %}
 
-        {% if available_slots %}
-            <div class="available-slots">
-                <h2>Available Time Slots</h2>
+        <!-- Available Time Slots -->
+        <div class="available-slots">
+            <h2>Available Time Slots</h2>
+            {% if available_slots %}
                 <div class="slots-grid">
                     {% for slot in available_slots %}
-                    <div class="slot-card">
+                    <div class="slot-card available">
                         <h3>{{ slot.faculty.username }}</h3>
                         <p class="date">{{ slot.date }}</p>
                         <p class="time">{{ slot.start_time }} - {{ slot.end_time }}</p>
@@ -35,12 +36,33 @@
                     </div>
                     {% endfor %}
                 </div>
-            </div>
-        {% else %}
-            <div class="no-slots">
-                <p>No time slots are currently available. Please check back later.</p>
-            </div>
-        {% endif %}
+            {% else %}
+                <div class="no-slots">
+                    <p>No available time slots at the moment. Please check back later.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Unavailable Time Slots -->
+        <div class="unavailable-slots">
+            <h2>Unavailable Time Slots</h2>
+            {% if unavailable_slots %}
+                <div class="slots-grid">
+                    {% for slot in unavailable_slots %}
+                    <div class="slot-card unavailable">
+                        <h3>{{ slot.faculty.username }}</h3>
+                        <p class="date">{{ slot.date }}</p>
+                        <p class="time">{{ slot.start_time }} - {{ slot.end_time }}</p>
+                        <p class="status">Already Booked</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-slots">
+                    <p>No unavailable time slots to display.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </body>
 </html>

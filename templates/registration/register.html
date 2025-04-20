@@ -1,23 +1,170 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Register - Appointment Scheduler</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <div class="auth-container">
-        <div class="auth-form">
-            <h2>Register</h2>
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-primary">Register</button>
-            </form>
-            <div class="auth-links">
-                <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="register-container">
+    <div class="register-box">
+        <div class="register-header">
+            <img src="{% static 'images/logo.png' %}" alt="BatStateU Logo" class="register-logo">
+            <h1>Create Account</h1>
+        </div>
+        
+        <form method="post" class="register-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" name="username" id="username" class="form-control" required>
             </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="user_type">User Type</label>
+                <select name="user_type" id="user_type" class="form-control" required>
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="password1">Password</label>
+                <input type="password" name="password1" id="password1" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password2">Confirm Password</label>
+                <input type="password" name="password2" id="password2" class="form-control" required>
+            </div>
+            
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <button type="submit" class="btn btn-primary btn-block">Register</button>
+        </form>
+        
+        <div class="register-footer">
+            <p>Already have an account? <a href="{% url 'login' %}">Log in here</a></p>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.register-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    padding: 20px;
+}
+
+.register-box {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.register-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.register-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+}
+
+.register-header h1 {
+    color: var(--primary-red);
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.register-form {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--dark-gray);
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: var(--primary-red);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    width: 100%;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background: var(--dark-red);
+}
+
+.register-footer {
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+}
+
+.register-footer a {
+    color: var(--primary-red);
+    text-decoration: none;
+}
+
+.register-footer a:hover {
+    text-decoration: underline;
+}
+
+.alert {
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.alert-danger {
+    background: #fff5f5;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.alert-danger p {
+    margin: 0;
+    padding: 2px 0;
+}
+</style>
+{% endblock %}

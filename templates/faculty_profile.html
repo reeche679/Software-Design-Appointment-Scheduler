@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/faculty_dashboard.css' %}">
+<style>
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+    
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .profile-info {
+        flex: 1;
+    }
+    
+    .profile-name {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .profile-title {
+        color: #666;
+        margin-bottom: 5px;
+    }
+    
+    .profile-department {
+        color: #888;
+    }
+    
+    .profile-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .profile-section {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #333;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .info-item {
+        margin-bottom: 15px;
+    }
+    
+    .info-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        font-size: 16px;
+        color: #333;
+    }
+    
+    .btn-edit {
+        background: #4CAF50;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .btn-edit:hover {
+        background: #45a049;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}{% static 'images/faculty.png' %}{% endif %}" 
+                 alt="Profile Picture">
+        </div>
+        <div class="profile-info">
+            <h1 class="profile-name">{{ user.get_full_name }}</h1>
+            <p class="profile-title">{{ user_profile.title|default:"Faculty Member" }}</p>
+            <p class="profile-department">{{ user_profile.department|default:"Computer Engineering Department" }}</p>
+        </div>
+        <div class="profile-actions">
+            <a href="{% url 'edit_profile' %}" class="btn-edit">
+                <i class="fas fa-edit"></i> Edit Profile
+            </a>
+        </div>
+    </div>
+
+    <div class="profile-section">
+        <h2 class="section-title">Contact Information</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ user.email }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Phone</div>
+                <div class="info-value">{{ user_profile.phone_number|default:"Not provided" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Office Location</div>
+                <div class="info-value">{{ user_profile.office_location|default:"Not specified" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Office Hours</div>
+                <div class="info-value">{{ user_profile.office_hours|default:"Not specified" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-section">
+        <h2 class="section-title">Professional Information</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Specialization</div>
+                <div class="info-value">{{ user_profile.specialization|default:"Not specified" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Research Interests</div>
+                <div class="info-value">{{ user_profile.research_interests|default:"Not specified" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Years of Experience</div>
+                <div class="info-value">{{ user_profile.years_of_experience|default:"Not specified" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any necessary JavaScript functionality here
+});
+</script>
+{% endblock %} 

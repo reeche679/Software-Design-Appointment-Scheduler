@@ -1,12 +1,139 @@
-{% if user.is_authenticated %}
+{% load static %}
 <header class="site-header">
     <div class="header-content">
-        <div class="user-info">
-            Welcome, {{ user.username }}
+        <div class="left-section">
+            <img src="https://batstate-u.edu.ph/wp-content/uploads/2022/05/BatStateU-NEU-Logo.png" alt="BatStateU Logo" class="logo">
+            <span class="logo-text">BatStateU Scheduler</span>
         </div>
-        <div class="auth-buttons">
-            <a href="{% url 'logout' %}" class="btn btn-logout">Logout</a>
+        
+        {% if user.is_authenticated %}
+        <div class="right-section">
+            <div class="welcome-box">
+                Welcome, {{ user.username }}!
+            </div>
+            <nav class="nav-menu">
+                <a href="{% url 'dashboard' %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="{% url 'schedule' %}" class="nav-link {% if 'schedule' in request.path %}active{% endif %}">
+                    <i class="fas fa-calendar-alt"></i> Schedule
+                </a>
+                <a href="{% url 'messages' %}" class="nav-link {% if 'messages' in request.path %}active{% endif %}">
+                    <i class="fas fa-envelope"></i> Messages
+                </a>
+                <a href="{% url 'profile' %}" class="nav-link {% if 'profile' in request.path %}active{% endif %}">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{% url 'logout' %}" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </nav>
         </div>
+        {% endif %}
     </div>
 </header>
-{% endif %}
+
+<style>
+.site-header {
+    background-color: #C41E3A;
+    padding: 1rem 2rem;
+    color: white;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.left-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo {
+    height: 40px;
+    width: auto;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: white;
+}
+
+.right-section {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.welcome-box {
+    background-color: white;
+    color: #333;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    text-decoration: none;
+}
+
+.nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.nav-link i {
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .right-section {
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .nav-menu {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .nav-link {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">

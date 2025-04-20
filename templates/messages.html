@@ -1,0 +1,452 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Layout styles */
+    .messages-page {
+        display: flex;
+        height: calc(100vh - 100px);
+        padding: 20px;
+        background: #f0f2f5;
+    }
+
+    /* Faculty list styles */
+    .faculty-list {
+        width: 300px;
+        background: white;
+        border-radius: 8px;
+        overflow-y: auto;
+        margin-right: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .faculty-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s;
+    }
+
+    .faculty-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .faculty-item.active {
+        background-color: #f0f0f0;
+    }
+
+    .faculty-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 12px;
+        object-fit: cover;
+    }
+
+    .faculty-info {
+        flex: 1;
+    }
+
+    .faculty-name {
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 4px;
+    }
+
+    /* Chat container styles */
+    .chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .chat-header {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        background: white;
+    }
+
+    .chat-header h3 {
+        margin: 0;
+        font-size: 16px;
+        color: #333;
+    }
+
+    /* Messages area styles */
+    .messages-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: white;
+    }
+
+    .messages-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Message group styles */
+    .message-group {
+        display: flex;
+        align-items: flex-end;
+        margin: 8px 0;
+        width: 100%;
+    }
+
+    .message-group.sent {
+        flex-direction: row-reverse;
+    }
+
+    .message-group.received {
+        flex-direction: row;
+    }
+
+    /* Message styles */
+    .message {
+        max-width: 60%;
+        padding: 12px 16px;
+        border-radius: 20px;
+        word-wrap: break-word;
+        font-size: 14px;
+        line-height: 1.4;
+        position: relative;
+    }
+
+    /* Student's sent messages (right side, red) */
+    .message.sent {
+        background-color: #C41E3A;
+        color: white;
+        border-bottom-right-radius: 4px;
+        margin-right: 8px;
+    }
+
+    /* Faculty's received messages (left side, gray) */
+    .message.received {
+        background-color: #E4E6EB;
+        color: #050505;
+        border-bottom-left-radius: 4px;
+        margin-left: 8px;
+    }
+
+    /* Avatar styles */
+    .message-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        margin: 0 8px;
+        object-fit: cover;
+    }
+
+    /* Message timestamp styles */
+    .message-time {
+        font-size: 11px;
+        margin-top: 4px;
+    }
+
+    .message.sent .message-time {
+        color: rgba(255, 255, 255, 0.7);
+        text-align: right;
+    }
+
+    .message.received .message-time {
+        color: #65676B;
+        text-align: left;
+    }
+
+    /* Input area styles */
+    .message-input-area {
+        padding: 15px;
+        border-top: 1px solid #ddd;
+        background: white;
+    }
+
+    .input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #F0F2F5;
+        border-radius: 20px;
+        padding: 8px 12px;
+    }
+
+    .message-input {
+        flex: 1;
+        padding: 8px;
+        border: none;
+        background: transparent;
+        resize: none;
+        height: 20px;
+        font-size: 14px;
+        line-height: 20px;
+        outline: none;
+    }
+
+    .send-button {
+        background: transparent;
+        color: #C41E3A;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+    }
+
+    .send-button:hover {
+        background: rgba(196, 30, 58, 0.1);
+    }
+
+    /* Empty state styles */
+    .no-messages {
+        text-align: center;
+        color: #666;
+        margin-top: 20px;
+    }
+
+    /* Scrollbar styles */
+    .messages-area::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .messages-area::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .messages-area::-webkit-scrollbar-thumb {
+        background: #BCC0C4;
+        border-radius: 3px;
+    }
+
+    .messages-area::-webkit-scrollbar-thumb:hover {
+        background: #A8ABAF;
+    }
+
+    /* Ensure messages don't overlap */
+    .message-group + .message-group {
+        margin-top: 12px;
+    }
+
+    /* Add some spacing between consecutive messages from the same sender */
+    .message-group.sent + .message-group.sent,
+    .message-group.received + .message-group.received {
+        margin-top: 4px;
+    }
+
+    /* Make sure long messages wrap properly */
+    .message p {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="messages-page">
+    <!-- Faculty List -->
+    <div class="faculty-list">
+        {% for faculty in available_faculty %}
+            {% if faculty.user.get_full_name %}
+            <div class="faculty-item" data-faculty-id="{{ faculty.user.id }}">
+                <img src="{% if faculty.user.profile_picture %}{{ faculty.user.profile_picture.url }}{% else %}{% static 'images/faculty.png' %}{% endif %}" 
+                     class="faculty-avatar" alt="{{ faculty.user.get_full_name }}">
+                <div class="faculty-info">
+                    <div class="faculty-name">{{ faculty.user.get_full_name }}</div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Chat Container -->
+    <div class="chat-container">
+        <div class="chat-header" id="chatHeader">
+            <h3></h3>
+        </div>
+        <div class="messages-area" id="messagesArea">
+            <div class="messages-wrapper">
+                {% if messages %}
+                    {% for message in messages reversed %}
+                        {% if message.student == user %}
+                            <!-- Student's sent message (right side) -->
+                            <div class="message-group sent">
+                                <div class="message sent">
+                                    {{ message.content }}
+                                    <div class="message-time">{{ message.created_at|timesince }} ago</div>
+                                </div>
+                                <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}{% static 'images/student.png' %}{% endif %}" 
+                                     class="message-avatar" alt="Your profile picture">
+                            </div>
+                        {% else %}
+                            <!-- Faculty's message (left side) -->
+                            <div class="message-group received">
+                                <img src="{% if message.faculty.profile_picture %}{{ message.faculty.profile_picture.url }}{% else %}{% static 'images/faculty.png' %}{% endif %}" 
+                                     class="message-avatar" alt="{{ message.faculty.get_full_name }}">
+                                <div class="message received">
+                                    {{ message.content }}
+                                    <div class="message-time">{{ message.created_at|timesince }} ago</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="no-messages">
+                        <p>Select a faculty member to view messages</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="message-input-area">
+            <form id="messageForm">
+                {% csrf_token %}
+                <input type="hidden" id="recipientId" name="recipient_id" value="">
+                <div class="input-wrapper">
+                    <textarea class="message-input" 
+                            id="messageContent" 
+                            name="content" 
+                            placeholder="Type a message..."
+                            rows="1"></textarea>
+                    <button type="submit" class="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const facultyItems = document.querySelectorAll('.faculty-item');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageContent');
+    const messagesArea = document.getElementById('messagesArea');
+    const chatHeader = document.getElementById('chatHeader').querySelector('h3');
+
+    // Faculty selection
+    facultyItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const facultyId = this.dataset.facultyId;
+            const facultyName = this.querySelector('.faculty-name').textContent;
+            
+            // Update UI
+            facultyItems.forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('recipientId').value = facultyId;
+            chatHeader.textContent = facultyName;
+
+            // Load messages for selected faculty
+            fetch(`/messages/?faculty_id=${facultyId}`)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newMessages = doc.querySelector('#messagesArea .messages-wrapper').innerHTML;
+                    const messagesWrapper = messagesArea.querySelector('.messages-wrapper');
+                    messagesWrapper.innerHTML = newMessages;
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                })
+                .catch(error => {
+                    console.error('Error loading messages:', error);
+                });
+        });
+    });
+
+    // Handle enter key press
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const content = this.value.trim();
+            if (content) {
+                messageForm.dispatchEvent(new Event('submit'));
+            }
+        }
+    });
+
+    // Message form submission
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        const formData = new FormData(this);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch('/send-message/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Create and append the new message
+                const messageGroup = document.createElement('div');
+                messageGroup.className = 'message-group sent';
+                
+                const newMessage = document.createElement('div');
+                newMessage.className = 'message sent';
+                newMessage.innerHTML = `
+                    ${data.content}
+                    <div class="message-time">just now</div>
+                `;
+                
+                const avatar = document.createElement('img');
+                avatar.src = '{% static "images/student.png" %}';  // Or user's profile picture
+                avatar.className = 'message-avatar';
+                avatar.alt = 'Your profile picture';
+                
+                messageGroup.appendChild(newMessage);
+                messageGroup.appendChild(avatar);
+                
+                const messagesWrapper = messagesArea.querySelector('.messages-wrapper');
+                messagesWrapper.appendChild(messageGroup);
+                
+                // Scroll to bottom after adding new message
+                setTimeout(() => {
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                }, 100);
+                
+                // Reset input
+                messageInput.value = '';
+            } else {
+                alert(data.message || 'Failed to send message');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to send message. Please try again.');
+        });
+    });
+
+    // Select first faculty by default if available
+    if (facultyItems.length > 0) {
+        facultyItems[0].click();
+    }
+
+    // Initial scroll to bottom
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+});
+</script>
+{% endblock %} 
