@@ -306,7 +306,7 @@
         </div>
 
         <div class="message-input-area">
-            <form id="messageForm">
+            <form id="messageForm" method="post" action="{% url 'send_message' %}">
                 {% csrf_token %}
                 <input type="hidden" id="recipientId" name="recipient_id" value="">
                 <div class="input-wrapper">
@@ -394,7 +394,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Create and append the new message
                 const messageGroup = document.createElement('div');
                 messageGroup.className = 'message-group sent';
                 
@@ -406,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 
                 const avatar = document.createElement('img');
-                avatar.src = userProfilePicture || '{% static "images/student.png" %}';  // Use appropriate default image
+                avatar.src = '{% static "images/student.png" %}';  // Changed from faculty.png to student.png
                 avatar.className = 'message-avatar';
                 avatar.alt = 'Your profile picture';
                 
@@ -429,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Failed to send message. Please try again.');
+            alert('Failed to send message');
         });
     });
 
