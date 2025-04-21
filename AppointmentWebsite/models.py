@@ -103,9 +103,10 @@ class Appointment(models.Model):
         return f"{self.student.username} - {self.time_slot}"
 
 class Message(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
-    faculty = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='student_messages')
+    faculty = models.ForeignKey(User, on_delete=models.CASCADE, related_name='faculty_messages')
     content = models.TextField()
+    sender_type = models.CharField(max_length=10, choices=[('student', 'Student'), ('faculty', 'Faculty')])
     attachment = models.FileField(upload_to='message_attachments/', null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -115,7 +116,13 @@ class Message(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Message from {self.student.get_full_name()} to {self.faculty.get_full_name()}"
+        return f"Message from {self.get_sender().get_full_name()} to {self.get_recipient().get_full_name()}"
+    
+    def get_sender(self):
+        return self.student if self.sender_type == 'student' else self.faculty
+    
+    def get_recipient(self):
+        return self.faculty if self.sender_type == 'student' else self.student
 
 class MessageReply(models.Model):
     SENDER_TYPES = (

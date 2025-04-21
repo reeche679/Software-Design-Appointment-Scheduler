@@ -414,28 +414,21 @@ def messages_view(request):
     try:
         user_profile = request.user.userprofile
         if user_profile.user_type == 'student':
-            # Get all messages for the student
-            user_messages = Message.objects.filter(student=request.user).order_by('-created_at')
-            # Get all available faculty members
-            available_faculty = UserProfile.objects.filter(user_type='faculty').select_related('user')
-            
-            # Debug information
-            print("Current user:", request.user.username)
-            print("User type:", user_profile.user_type)
-            print("Available faculty:", [(f.user.username, f.user.get_full_name()) for f in available_faculty])
+            # Get messages where the current user is either the student or receiving from faculty
+            messages = Message.objects.filter(
+                student=request.user
+            ).order_by('-created_at')
+            available_faculty = UserProfile.objects.filter(user_type='faculty')
         else:
-            # Get all messages for the faculty
-            user_messages = Message.objects.filter(faculty=request.user).order_by('-created_at')
+            # For faculty, show messages where they are the faculty member
+            messages = Message.objects.filter(
+                faculty=request.user
+            ).order_by('-created_at')
             available_faculty = None
-            print("Faculty user viewing messages")
 
         return render(request, 'messages.html', {
-            'messages': user_messages,
-            'available_faculty': available_faculty,
-            'debug_info': {
-                'user_type': user_profile.user_type,
-                'faculty_count': available_faculty.count() if available_faculty else 0
-            }
+            'messages': messages,
+            'available_faculty': available_faculty
         })
     except UserProfile.DoesNotExist:
         messages.error(request, 'User profile not found')
@@ -446,14 +439,16 @@ def send_message(request):
     if request.method == 'POST':
         try:
             user_profile = request.user.userprofile
-            if user_profile.user_type == 'student':
-                # Handle new message
-                recipient_id = request.POST.get('recipient_id')
-                content = request.POST.get('content')
-                attachment = request.FILES.get('attachment')
+            content = request.POST.get('content')
+            
+            if not content:
+                return JsonResponse({'success': False, 'error': 'Message content is required'})
 
-                if not recipient_id or not content:
-                    return JsonResponse({'success': False, 'error': 'Missing required fields'})
+            if user_profile.user_type == 'student':
+                # Student sending message to faculty
+                recipient_id = request.POST.get('recipient_id')
+                if not recipient_id:
+                    return JsonResponse({'success': False, 'error': 'Recipient is required'})
 
                 try:
                     faculty = User.objects.get(id=recipient_id)
@@ -465,33 +460,68 @@ def send_message(request):
                         student=request.user,
                         faculty=faculty,
                         content=content,
-                        attachment=attachment
+                        sender_type='student',
+                        attachment=request.FILES.get('attachment')
                     )
-                    return JsonResponse({'success': True})
+                    return JsonResponse({
+                        'success': True,
+                        'message': {
+                            'content': message.content,
+                            'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                            'sender_type': 'student'
+                        }
+                    })
                 except User.DoesNotExist:
                     return JsonResponse({'success': False, 'error': 'Faculty not found'})
             else:
-                # Handle reply
-                message_id = request.POST.get('message_id')
-                content = request.POST.get('content')
-
-                if not message_id or not content:
-                    return JsonResponse({'success': False, 'error': 'Missing required fields'})
+                # Faculty sending message to student
+                student_id = request.POST.get('recipient_id')
+                if not student_id:
+                    return JsonResponse({'success': False, 'error': 'Recipient is required'})
 
                 try:
-                    original_message = Message.objects.get(id=message_id)
-                    if original_message.faculty != request.user:
-                        return JsonResponse({'success': False, 'error': 'Permission denied'})
+                    student = User.objects.get(id=student_id)
+                    student_profile = student.userprofile
+                    if student_profile.user_type != 'student':
+                        return JsonResponse({'success': False, 'error': 'Invalid recipient'})
 
-                    MessageReply.objects.create(
-                        message=original_message,
-                        sender=request.user,
+                    message = Message.objects.create(
+                        student=student,
+                        faculty=request.user,
+                        content=content,
                         sender_type='faculty',
-                        content=content
+                        attachment=request.FILES.get('attachment')
                     )
-                    return JsonResponse({'success': True})
-                except Message.DoesNotExist:
-                    return JsonResponse({'success': False, 'error': 'Message not found'})
+                    return JsonResponse({
+                        'success': True,
+                        'message': {
+                            'content': message.content,
+                            'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                            'sender_type': 'faculty'
+                        }
+                    })
+                except User.DoesNotExist:
+                    return JsonResponse({'success': False, 'error': 'Student not found'})
+
         except UserProfile.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'User profile not found'})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def faculty_messages_view(request):
+    try:
+        user_profile = request.user.userprofile
+        if user_profile.user_type != 'faculty':
+            raise PermissionDenied
+        
+        # Get all messages where the current user is the faculty
+        messages = Message.objects.filter(
+            faculty=request.user
+        ).order_by('-created_at')
+        
+        return render(request, 'faculty_messages.html', {
+            'messages': messages
+        })
+    except UserProfile.DoesNotExist:
+        messages.error(request, 'User profile not found')
+        return redirect('logout')

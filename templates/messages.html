@@ -124,7 +124,6 @@
         background-color: #C41E3A;
         color: white;
         border-bottom-right-radius: 4px;
-        margin-right: 8px;
     }
 
     /* Faculty's received messages (left side, gray) */
@@ -132,7 +131,6 @@
         background-color: #E4E6EB;
         color: #050505;
         border-bottom-left-radius: 4px;
-        margin-left: 8px;
     }
 
     /* Avatar styles */
@@ -277,8 +275,8 @@
             <div class="messages-wrapper">
                 {% if messages %}
                     {% for message in messages reversed %}
-                        {% if message.student == user %}
-                            <!-- Student's sent message (right side) -->
+                        {% if message.sender_type == 'student' and message.student == user %}
+                            <!-- Student's sent message (right side, red) -->
                             <div class="message-group sent">
                                 <div class="message sent">
                                     {{ message.content }}
@@ -288,7 +286,7 @@
                                      class="message-avatar" alt="Your profile picture">
                             </div>
                         {% else %}
-                            <!-- Faculty's message (left side) -->
+                            <!-- Faculty's received message (left side, grey) -->
                             <div class="message-group received">
                                 <img src="{% if message.faculty.profile_picture %}{{ message.faculty.profile_picture.url }}{% else %}{% static 'images/faculty.png' %}{% endif %}" 
                                      class="message-avatar" alt="{{ message.faculty.get_full_name }}">
@@ -301,7 +299,7 @@
                     {% endfor %}
                 {% else %}
                     <div class="no-messages">
-                        <p>Select a faculty member to view messages</p>
+                        <p>Select a faculty member to start messaging</p>
                     </div>
                 {% endif %}
             </div>

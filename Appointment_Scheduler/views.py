@@ -516,51 +516,58 @@ def confirm_appointment(request):
 @login_required
 @require_POST
 def send_message(request):
-    try:
-        user_profile = request.user.userprofile
-        recipient_id = request.POST.get('recipient_id')  # Changed from faculty_id
-        content = request.POST.get('content')
-        attachment = request.FILES.get('attachment')
+    if request.method == 'POST':
+        try:
+            user_profile = request.user.userprofile
+            content = request.POST.get('content')
+            recipient_id = request.POST.get('recipient_id')
 
-        if not recipient_id or not content:
-            return JsonResponse({'status': 'error', 'message': 'Missing required fields'}, status=400)
+            if not content or not recipient_id:
+                return JsonResponse({'success': False, 'error': 'Missing required fields'})
 
-        recipient = User.objects.get(id=recipient_id)
-        recipient_profile = recipient.userprofile
+            try:
+                if user_profile.user_type == 'student':
+                    # Student sending to faculty
+                    faculty = User.objects.get(id=recipient_id)
+                    if faculty.userprofile.user_type != 'faculty':
+                        return JsonResponse({'success': False, 'error': 'Invalid recipient'})
+                    
+                    message = Message.objects.create(
+                        student=request.user,
+                        faculty=faculty,
+                        content=content,
+                        sender_type='student',
+                        attachment=request.FILES.get('attachment')
+                    )
+                else:
+                    # Faculty sending to student
+                    student = User.objects.get(id=recipient_id)
+                    if student.userprofile.user_type != 'student':
+                        return JsonResponse({'success': False, 'error': 'Invalid recipient'})
+                    
+                    message = Message.objects.create(
+                        student=student,
+                        faculty=request.user,
+                        content=content,
+                        sender_type='faculty',
+                        attachment=request.FILES.get('attachment')
+                    )
 
-        # Check if the sender and recipient have valid roles
-        if user_profile.user_type == 'faculty' and recipient_profile.user_type != 'student':
-            return JsonResponse({'status': 'error', 'message': 'Can only send messages to students'}, status=400)
-        elif user_profile.user_type == 'student' and recipient_profile.user_type != 'faculty':
-            return JsonResponse({'status': 'error', 'message': 'Can only send messages to faculty'}, status=400)
+                return JsonResponse({
+                    'success': True,
+                    'message': {
+                        'id': message.id,
+                        'content': message.content,
+                        'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                        'sender_type': message.sender_type
+                    }
+                })
+            except User.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Recipient not found'})
 
-        # Create message based on sender type
-        if user_profile.user_type == 'faculty':
-            message = Message.objects.create(
-                student=recipient,
-                faculty=request.user,
-                content=content,
-                attachment=attachment
-            )
-        else:
-            message = Message.objects.create(
-                student=request.user,
-                faculty=recipient,
-                content=content,
-                attachment=attachment
-            )
-
-        return JsonResponse({
-            'status': 'success',
-            'message_id': message.id,
-            'recipient_name': recipient.get_full_name(),
-            'content': message.content,
-            'created_at': message.created_at.isoformat()
-        })
-    except User.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Recipient not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User profile not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 @login_required
 def approve_appointment(request, appointment_id):
