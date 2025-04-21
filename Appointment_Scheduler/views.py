@@ -7,6 +7,7 @@ from .forms import UserProfileForm  # We'll create this form next
 from django.utils import timezone
 import json
 from django.views.decorators.http import require_POST
+from django.core.exceptions import PermissionDenied
 
 @login_required
 def homepage(request):
@@ -424,32 +425,43 @@ def reply_to_message(request, message_id):
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
 
 @login_required
-def faculty_messages(request):
+def faculty_messages_view(request):
     try:
         user_profile = request.user.userprofile
         if user_profile.user_type != 'faculty':
-            messages.error(request, "You don't have permission to access faculty messages.")
-            return redirect('messages')
-    except UserProfile.DoesNotExist:
-        messages.error(request, "Please complete your profile to access faculty messages.")
-        return redirect('edit_profile')
+            raise PermissionDenied
+        
+        # Get selected student_id from query parameters
+        selected_student_id = request.GET.get('student_id')
+        
+        # Get all students who have messages with this faculty
+        students = User.objects.filter(
+            student_messages__faculty=request.user  # Get students who have messages with this faculty
+        ).distinct()  # Use distinct to avoid duplicates
 
-    # Get faculty's messages
-    faculty_messages = Message.objects.filter(
-        faculty=request.user
-    ).prefetch_related('replies').order_by('-created_at')
-    
-    # Get available students
-    available_students = UserProfile.objects.filter(
-        user_type='student'
-    ).select_related('user')
-    
-    context = {
-        'messages': faculty_messages,
-        'unread_count': faculty_messages.filter(is_read=False).count(),
-        'available_students': available_students
-    }
-    return render(request, 'faculty_messages.html', context)
+        if selected_student_id:
+            # Get messages only for the selected student
+            messages = Message.objects.filter(
+                faculty=request.user,
+                student_id=selected_student_id
+            ).order_by('-created_at')
+        else:
+            # If no student selected, get all messages
+            messages = Message.objects.filter(
+                faculty=request.user
+            ).order_by('-created_at')
+
+        print(f"Number of students found: {students.count()}")  # Debug print
+        print(f"Students: {[s.get_full_name() for s in students]}")  # Debug print
+        print(f"Number of messages: {messages.count()}")  # Debug print
+
+        return render(request, 'faculty_messages.html', {
+            'messages': messages,
+            'students': students
+        })
+    except UserProfile.DoesNotExist:
+        messages.error(request, 'User profile not found')
+        return redirect('logout')
 
 @login_required
 def faculty_profile(request):
@@ -557,7 +569,7 @@ def send_message(request):
                     'success': True,
                     'message': {
                         'id': message.id,
-                        'content': message.content,
+                        'content': content,
                         'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                         'sender_type': message.sender_type
                     }

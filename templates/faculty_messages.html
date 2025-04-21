@@ -11,7 +11,7 @@
         background: #f0f2f5;
     }
 
-    /* Students list styles */
+    /* Students list styles (renamed from faculty-list) */
     .students-list {
         width: 300px;
         background: white;
@@ -278,16 +278,25 @@
 <div class="messages-page">
     <!-- Students List -->
     <div class="students-list">
-        {% regroup messages by student as student_messages %}
-        {% for student in student_messages %}
-            <div class="student-item {% if forloop.first %}active{% endif %}" data-student-id="{{ student.grouper.id }}">
-                <img src="{% if student.grouper.profile_picture %}{{ student.grouper.profile_picture.url }}{% else %}{% static 'images/student.png' %}{% endif %}" 
-                     class="student-avatar" alt="{{ student.grouper.get_full_name }}">
-                <div class="student-info">
-                    <div class="student-name">{{ student.grouper.get_full_name }}</div>
+        {% if students %}
+            {% for student in students %}
+                <div class="student-item {% if forloop.first %}active{% endif %}" data-student-id="{{ student.id }}">
+                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.png' %}{% endif %}" 
+                         class="student-avatar" alt="{{ student.get_full_name }}">
+                    <div class="student-info">
+                        <div class="student-name">{{ student.get_full_name }}</div>
+                    </div>
                 </div>
+            {% empty %}
+                <div class="no-students">
+                    <p>No messages from students</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-students">
+                <p>No messages from students</p>
             </div>
-        {% endfor %}
+        {% endif %}
     </div>
 
     <!-- Chat Container -->
@@ -417,19 +426,19 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'success') {
+            if (data.success) {
                 const messageGroup = document.createElement('div');
                 messageGroup.className = 'message-group sent';
                 
                 const newMessage = document.createElement('div');
                 newMessage.className = 'message sent';
                 newMessage.innerHTML = `
-                    ${data.content}
+                    ${data.message.content}
                     <div class="message-time">just now</div>
                 `;
                 
                 const avatar = document.createElement('img');
-                avatar.src = userProfilePicture || '{% static "images/student.png" %}';  // Use appropriate default image
+                avatar.src = '{% static "images/faculty.png" %}';
                 avatar.className = 'message-avatar';
                 avatar.alt = 'Your profile picture';
                 
@@ -447,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reset input
                 messageInput.value = '';
             } else {
-                alert('Failed to send message');
+                alert(data.error || 'Failed to send message');
             }
         })
         .catch(error => {

@@ -514,13 +514,30 @@ def faculty_messages_view(request):
         if user_profile.user_type != 'faculty':
             raise PermissionDenied
         
-        # Get all messages where the current user is the faculty
-        messages = Message.objects.filter(
-            faculty=request.user
-        ).order_by('-created_at')
+        # Get selected student_id from query parameters
+        selected_student_id = request.GET.get('student_id')
         
+        if selected_student_id:
+            # Get messages only for the selected student
+            messages = Message.objects.filter(
+                faculty=request.user,
+                student_id=selected_student_id
+            ).order_by('-created_at')
+        else:
+            # If no student selected, get all messages to show in the sidebar
+            messages = Message.objects.filter(
+                faculty=request.user
+            ).order_by('-created_at')
+
+        # Get unique students who have messaged this faculty
+        students = User.objects.filter(
+            userprofile__user_type='student',
+            student_messages__faculty=request.user
+        ).distinct()
+
         return render(request, 'faculty_messages.html', {
-            'messages': messages
+            'messages': messages,
+            'students': students  # Pass the students list separately
         })
     except UserProfile.DoesNotExist:
         messages.error(request, 'User profile not found')

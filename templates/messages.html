@@ -391,14 +391,9 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: formData
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            if (data.status === 'success') {
+            if (data.success) {
                 // Create and append the new message
                 const messageGroup = document.createElement('div');
                 messageGroup.className = 'message-group sent';
@@ -406,12 +401,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const newMessage = document.createElement('div');
                 newMessage.className = 'message sent';
                 newMessage.innerHTML = `
-                    ${data.content}
+                    ${data.message.content}
                     <div class="message-time">just now</div>
                 `;
                 
                 const avatar = document.createElement('img');
-                avatar.src = '{% static "images/student.png" %}';  // Or user's profile picture
+                avatar.src = userProfilePicture || '{% static "images/student.png" %}';  // Use appropriate default image
                 avatar.className = 'message-avatar';
                 avatar.alt = 'Your profile picture';
                 
@@ -429,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reset input
                 messageInput.value = '';
             } else {
-                alert(data.message || 'Failed to send message');
+                alert(data.error || 'Failed to send message');
             }
         })
         .catch(error => {
