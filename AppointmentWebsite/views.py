@@ -9,7 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, JsonResponse
 import os
 from django.db.utils import IntegrityError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.utils import timezone
 from django.db.models import Count
 
@@ -542,3 +542,18 @@ def faculty_messages_view(request):
     except UserProfile.DoesNotExist:
         messages.error(request, 'User profile not found')
         return redirect('logout')
+
+@login_required
+def faculty_dashboard(request):
+    context = {
+        'pending_appointments_count': Appointment.objects.filter(status='Pending').count(),
+        'todays_appointments_count': Appointment.objects.filter(date=date.today()).count(),
+        'weekly_appointments_count': Appointment.objects.filter(date__range=[date.today(), date.today() + timedelta(days=7)]).count(),
+        'unread_messages_count': Message.objects.filter(is_read=False).count(),
+        'todays_appointments': Appointment.objects.filter(date=date.today()).order_by('time_slot__start_time'),
+        'pending_appointments': Appointment.objects.filter(status='Pending'),
+        'upcoming_appointments': Appointment.objects.filter(date__gte=date.today()).exclude(status='Completed'),
+        'time_slots': TimeSlot.objects.filter(date__gte=date.today()),
+        'today': date.today(),
+    }
+    return render(request, 'faculty_dashboard.html', context)

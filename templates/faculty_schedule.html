@@ -41,14 +41,15 @@
 
     <div class="schedule-content">
         <div class="schedule-tabs">
-            <button class="tab-btn active" data-tab="upcoming">Upcoming Slots</button>
-            <button class="tab-btn" data-tab="past">Past Slots</button>
+            <button class="tab-btn active" data-tab="upcoming">Open Slots</button>
+            <button class="tab-btn" data-tab="past">Booked Slots</button>
         </div>
 
-        <div class="tab-content" id="upcoming">
+        <div class="tab-content active" id="upcoming">
             {% if time_slots %}
             <div class="time-slots">
                 {% for slot in time_slots %}
+                {% if not slot.is_booked %}
                 <div class="time-slot-card" data-slot-id="{{ slot.id }}">
                     <div class="slot-info">
                         <div class="slot-info-item">
@@ -74,15 +75,62 @@
                     </button>
                     {% endif %}
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
             {% else %}
             <div class="no-slots">
                 <i class="fas fa-calendar-times"></i>
-                <p>No time slots available</p>
+                <p>No upcoming time slots available</p>
                 <button class="add-slot-btn" onclick="openAddSlotModal()">
                     <i class="fas fa-plus"></i> Add Your First Time Slot
                 </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="tab-content" id="past">
+            {% if time_slots %}
+            <div class="time-slots">
+                {% for slot in time_slots %}
+                {% if slot.is_booked %}
+                <div class="time-slot-card reserved" data-slot-id="{{ slot.id }}">
+                    <div class="slot-info">
+                        <div class="slot-info-item">
+                            <i class="fas fa-calendar text-danger"></i>
+                            {{ slot.date|date:"F d, Y" }}
+                        </div>
+                        <div class="slot-info-item">
+                            <i class="fas fa-clock text-danger"></i>
+                            {{ slot.start_time|time:"g:i A" }} - {{ slot.end_time|time:"g:i A" }}
+                        </div>
+                        <div class="slot-info-item">
+                            <i class="fas fa-door-open text-danger"></i>
+                            Room {{ slot.room }}
+                        </div>
+                        <div class="slot-info-item">
+                            <i class="fas fa-user text-danger"></i>
+                            Student: {{ slot.appointment.student.get_full_name }}
+                        </div>
+                        {% if slot.appointment.reason %}
+                        <div class="slot-info-item">
+                            <i class="fas fa-info-circle text-danger"></i>
+                            Reason: {{ slot.appointment.reason }}
+                        </div>
+                        {% endif %}
+                        <div class="slot-status booked">
+                            <i class="fas fa-calendar-check text-success"></i>
+                            Status: {{ slot.appointment.status }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-slots">
+                <i class="fas fa-calendar-times"></i>
+                <p>No past appointments</p>
             </div>
             {% endif %}
         </div>
@@ -191,11 +239,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Tab switching
     const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
     tabBtns.forEach(btn => {
         btn.addEventListener('click', function() {
+            // Remove active class from all buttons and contents
             tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked button and corresponding content
             this.classList.add('active');
-            // Add tab switching logic here
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
         });
     });
 });
@@ -259,4 +314,34 @@ window.addEventListener('storage', function(e) {
     }
 });
 </script>
+
+<!-- Add CSS for tab content -->
+<style>
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.schedule-tabs {
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    margin-right: 10px;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+</style>
 {% endblock %} 

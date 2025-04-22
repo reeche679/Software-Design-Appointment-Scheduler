@@ -1,121 +1,96 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block content %}
-<div class="container">
-    <div class="header">
-        <h1>Faculty Dashboard</h1>
-        <a href="{% url 'faculty_history' %}" class="history-button">View History</a>
+<div class="appointments-section">
+    <!-- Pending Appointments -->
+    <div class="appointment-category">
+        {% if appointments.pending %}
+            <div class="time-slots-grid">
+                {% for appointment in appointments.pending %}
+                    <div class="time-slot pending">
+                        <div class="slot-date">{{ appointment.time_slot.date }}</div>
+                        <div class="slot-time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</div>
+                        <div class="slot-room">Room: {{ appointment.time_slot.get_room_display }}</div>
+                        <div class="slot-student">
+                            <strong>Student:</strong> {{ appointment.student.get_full_name }}
+                            {% if appointment.student_file %}
+                                <div class="file-info">
+                                    <strong>Document:</strong> {{ appointment.student_file.get_file_type_display }}
+                                    <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-button">View Document</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="slot-actions">
+                            <a href="{% url 'approve_appointment' appointment.id %}" class="approve-button">Approve</a>
+                            <a href="{% url 'reject_appointment' appointment.id %}" class="reject-button">Reject</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No pending appointments.</p>
+        {% endif %}
     </div>
 
-    <!-- Add Time Slot Section -->
-    <div class="add-slot-section">
-        <h2>Add New Time Slot</h2>
-        <form method="POST" class="time-slot-form">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="submit-button">Add Time Slot</button>
-        </form>
+    <!-- Approved Appointments -->
+    <div class="appointment-category">
+        <h3>Approved Appointments</h3>
+        {% if appointments.approved %}
+            <div class="time-slots-grid">
+                {% for appointment in appointments.approved %}
+                    <div class="time-slot approved">
+                        <div class="slot-date">{{ appointment.time_slot.date }}</div>
+                        <div class="slot-time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</div>
+                        <div class="slot-room">Room: {{ appointment.time_slot.get_room_display }}</div>
+                        <div class="slot-student">
+                            <strong>Student:</strong> {{ appointment.student.get_full_name }}
+                            {% if appointment.student_file %}
+                                <div class="file-info">
+                                    <strong>Document:</strong> {{ appointment.student_file.get_file_type_display }}
+                                    <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-button">View Document</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No approved appointments.</p>
+        {% endif %}
     </div>
 
-    <!-- Appointments Section -->
-    <div class="appointments-section">
-        <h2>Your Appointments</h2>
-        
-        <!-- Pending Appointments -->
-        <div class="appointment-category">
-            <h3>Pending Appointments</h3>
-            {% if appointments.pending %}
-                <div class="time-slots-grid">
-                    {% for appointment in appointments.pending %}
-                        <div class="time-slot pending">
-                            <div class="slot-date">{{ appointment.time_slot.date }}</div>
-                            <div class="slot-time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</div>
-                            <div class="slot-room">Room: {{ appointment.time_slot.get_room_display }}</div>
+    <!-- Available Time Slots -->
+    <div class="time-slots-section">
+        <h2>Your Available Time Slots</h2>
+        {% if existing_slots %}
+            <div class="time-slots-grid">
+                {% for slot in existing_slots %}
+                    <div class="time-slot {% if slot.is_available %}available{% else %}pending{% endif %}">
+                        <div class="slot-date">{{ slot.date }}</div>
+                        <div class="slot-time">{{ slot.start_time }} - {{ slot.end_time }}</div>
+                        <div class="slot-room">Room: {{ slot.get_room_display }}</div>
+                        {% if not slot.is_available %}
                             <div class="slot-student">
-                                <strong>Student:</strong> {{ appointment.student.get_full_name }}
-                                {% if appointment.student_file %}
+                                <strong>Student:</strong> {{ slot.student_name }}
+                                {% if slot.student_file %}
                                     <div class="file-info">
-                                        <strong>Document:</strong> {{ appointment.student_file.get_file_type_display }}
-                                        <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-button">View Document</a>
+                                        <strong>Document:</strong> {{ slot.student_file.get_file_type_display }}
+                                        <a href="{% url 'view_file' slot.student_file.id %}" class="view-file-button">View Document</a>
                                     </div>
                                 {% endif %}
                             </div>
                             <div class="slot-actions">
-                                <a href="{% url 'approve_appointment' appointment.id %}" class="approve-button">Approve</a>
-                                <a href="{% url 'reject_appointment' appointment.id %}" class="reject-button">Reject</a>
+                                <a href="{% url 'approve_appointment' slot.appointment.id %}" class="approve-button">Approve</a>
+                                <a href="{% url 'reject_appointment' slot.appointment.id %}" class="reject-button">Reject</a>
                             </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>No pending appointments.</p>
-            {% endif %}
-        </div>
-
-        <!-- Approved Appointments -->
-        <div class="appointment-category">
-            <h3>Approved Appointments</h3>
-            {% if appointments.approved %}
-                <div class="time-slots-grid">
-                    {% for appointment in appointments.approved %}
-                        <div class="time-slot approved">
-                            <div class="slot-date">{{ appointment.time_slot.date }}</div>
-                            <div class="slot-time">{{ appointment.time_slot.start_time }} - {{ appointment.time_slot.end_time }}</div>
-                            <div class="slot-room">Room: {{ appointment.time_slot.get_room_display }}</div>
-                            <div class="slot-student">
-                                <strong>Student:</strong> {{ appointment.student.get_full_name }}
-                                {% if appointment.student_file %}
-                                    <div class="file-info">
-                                        <strong>Document:</strong> {{ appointment.student_file.get_file_type_display }}
-                                        <a href="{% url 'view_file' appointment.student_file.id %}" class="view-file-button">View Document</a>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>No approved appointments.</p>
-            {% endif %}
-        </div>
-
-        <!-- Available Time Slots -->
-        <div class="time-slots-section">
-            <h2>Your Available Time Slots</h2>
-            {% if existing_slots %}
-                <div class="time-slots-grid">
-                    {% for slot in existing_slots %}
-                        <div class="time-slot {% if slot.is_available %}available{% else %}pending{% endif %}">
-                            <div class="slot-date">{{ slot.date }}</div>
-                            <div class="slot-time">{{ slot.start_time }} - {{ slot.end_time }}</div>
-                            <div class="slot-room">Room: {{ slot.get_room_display }}</div>
-                            {% if not slot.is_available %}
-                                <div class="slot-student">
-                                    <strong>Student:</strong> {{ slot.student_name }}
-                                    {% if slot.student_file %}
-                                        <div class="file-info">
-                                            <strong>Document:</strong> {{ slot.student_file.get_file_type_display }}
-                                            <a href="{% url 'view_file' slot.student_file.id %}" class="view-file-button">View Document</a>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                <div class="slot-actions">
-                                    <a href="{% url 'approve_appointment' slot.appointment.id %}" class="approve-button">Approve</a>
-                                    <a href="{% url 'reject_appointment' slot.appointment.id %}" class="reject-button">Reject</a>
-                                </div>
-                            {% else %}
-                                <div class="slot-status">Available</div>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="no-slots">
-                    <p>No time slots available. Add some using the form above.</p>
-                </div>
-            {% endif %}
-        </div>
+                        {% else %}
+                            <div class="slot-status">Available</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-slots">
+                <p>No time slots available. Add some using the form above.</p>
+            </div>
+        {% endif %}
     </div>
 </div>
 
@@ -350,4 +325,3 @@
         margin-top: 5px;
     }
 </style>
-{% endblock %}

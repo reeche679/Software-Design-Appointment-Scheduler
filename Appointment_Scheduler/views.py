@@ -8,6 +8,8 @@ from django.utils import timezone
 import json
 from django.views.decorators.http import require_POST
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from datetime import datetime
 
 @login_required
 def homepage(request):
@@ -246,28 +248,65 @@ def faculty_dashboard(request):
         messages.error(request, "Please complete your profile to access the faculty dashboard.")
         return redirect('edit_profile')
 
-    # Get faculty's upcoming appointments
+    today = timezone.now().date()
+    
+    # Get pending appointments count
+    pending_appointments_count = Appointment.objects.filter(
+        time_slot__faculty=request.user,
+        status='Pending'
+    ).count()
+
+    # Get today's appointments
+    todays_appointments = Appointment.objects.filter(
+        time_slot__faculty=request.user,
+        time_slot__date=today,
+        status='Approved'
+    ).select_related('student', 'time_slot').order_by('time_slot__start_time')
+    
+    todays_appointments_count = todays_appointments.count()
+
+    # Get this week's appointments (next 7 days)
+    week_end = today + timezone.timedelta(days=7)
+    weekly_appointments_count = Appointment.objects.filter(
+        time_slot__faculty=request.user,
+        time_slot__date__range=[today, week_end],
+        status='Approved'
+    ).count()
+
+    # Get unread messages count
+    unread_messages_count = Message.objects.filter(
+        faculty=request.user,
+        is_read=False
+    ).count()
+
+    # Get upcoming appointments for display
     upcoming_appointments = Appointment.objects.filter(
         time_slot__faculty=request.user,
-        time_slot__date__gte=timezone.now().date()
+        time_slot__date__gte=today
     ).select_related('student', 'time_slot').order_by('time_slot__date', 'time_slot__start_time')
 
-    # Get faculty's time slots
+    # Get time slots
     time_slots = TimeSlot.objects.filter(
         faculty=request.user,
-        date__gte=timezone.now().date()
+        date__gte=today
     ).order_by('date', 'start_time')
 
-    # Get faculty's messages
-    faculty_messages = Message.objects.filter(
-        faculty=request.user
-    ).prefetch_related('replies').order_by('-created_at')
-    
+    # Get pending appointments for the tab
+    pending_appointments = Appointment.objects.filter(
+        time_slot__faculty=request.user,
+        status='Pending'
+    ).select_related('student', 'time_slot').order_by('time_slot__date', 'time_slot__start_time')
+
     context = {
+        'pending_appointments_count': pending_appointments_count,
+        'todays_appointments_count': todays_appointments_count,
+        'weekly_appointments_count': weekly_appointments_count,
+        'unread_messages_count': unread_messages_count,
+        'todays_appointments': todays_appointments,
         'upcoming_appointments': upcoming_appointments,
         'time_slots': time_slots,
-        'messages': faculty_messages,
-        'today': timezone.now().date(),
+        'pending_appointments': {'pending': pending_appointments},  # Wrapped in dict to match template expectations
+        'today': today,
     }
     return render(request, 'faculty_dashboard.html', context)
 
@@ -275,13 +314,23 @@ def faculty_dashboard(request):
 def add_time_slot(request):
     if request.method == 'POST':
         try:
-            date = request.POST.get('date')
-            start_time = request.POST.get('start_time')
-            end_time = request.POST.get('end_time')
+            # Verify user is faculty
+            if not hasattr(request.user, 'userprofile') or request.user.userprofile.user_type != 'faculty':
+                raise PermissionDenied("Only faculty members can add time slots")
+
+            # Get form data and parse date/time
+            date_str = request.POST.get('date')
+            start_time_str = request.POST.get('start_time')
+            end_time_str = request.POST.get('end_time')
             room = request.POST.get('room')
 
+            # Parse the date and time strings
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            start_time = datetime.strptime(start_time_str, '%H:%M').time()
+            end_time = datetime.strptime(end_time_str, '%H:%M').time()
+
             # Create new time slot
-            TimeSlot.objects.create(
+            time_slot = TimeSlot.objects.create(
                 faculty=request.user,
                 date=date,
                 start_time=start_time,
@@ -289,13 +338,30 @@ def add_time_slot(request):
                 room=room,
                 is_available=True
             )
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'success',
+                    'slot': {
+                        'id': time_slot.id,
+                        'date': date_str,  # Use the original string format for the response
+                        'start_time': start_time_str,  # Use the original string format
+                        'end_time': end_time_str,  # Use the original string format
+                        'room': room
+                    }
+                })
+
             messages.success(request, 'Time slot added successfully!')
+            
         except Exception as e:
-            messages.error(request, f'Error adding time slot: {str(e)}')
-        
-        return redirect('faculty_dashboard')
-    
-    return redirect('faculty_dashboard')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': str(e)
+                }, status=400)
+            messages.error(request, str(e))
+
+    return redirect('faculty_schedule')
 
 @login_required
 def suggest_alternative(request):
@@ -344,10 +410,25 @@ def faculty_schedule(request):
         messages.error(request, "Please complete your profile to access the faculty schedule.")
         return redirect('edit_profile')
 
-    # Get faculty's time slots
+    # Get faculty's time slots with related appointment information
     time_slots = TimeSlot.objects.filter(
         faculty=request.user
+    ).select_related(
+        'appointment'  # Use select_related since it's a OneToOneField
     ).order_by('date', 'start_time')
+
+    # Annotate each time slot with appointment information
+    for slot in time_slots:
+        try:
+            # Since it's a OneToOneField, we can access it directly
+            slot.is_booked = hasattr(slot, 'appointment')
+            if slot.is_booked:
+                slot.appointment = slot.appointment
+            else:
+                slot.appointment = None
+        except Exception:
+            slot.appointment = None
+            slot.is_booked = False
 
     context = {
         'time_slots': time_slots,
@@ -358,23 +439,39 @@ def faculty_schedule(request):
 @login_required
 def delete_time_slot(request, slot_id):
     try:
-        # Get the time slot
         time_slot = TimeSlot.objects.get(id=slot_id, faculty=request.user)
         
-        # Check if the slot is already booked
-        if time_slot.is_booked:
-            messages.error(request, "Cannot delete a booked time slot.")
-            return redirect('faculty_dashboard')
+        # Check if the time slot has an appointment
+        if hasattr(time_slot, 'appointment'):
+            raise ValueError("Cannot delete a time slot that has an appointment.")
             
-        # Delete the time slot
         time_slot.delete()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Time slot deleted successfully'
+            })
+            
         messages.success(request, "Time slot deleted successfully.")
+        
     except TimeSlot.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Time slot not found'
+            }, status=404)
         messages.error(request, "Time slot not found.")
+        
     except Exception as e:
-        messages.error(request, f"Error deleting time slot: {str(e)}")
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+        messages.error(request, str(e))
     
-    return redirect('faculty_dashboard')
+    return redirect('faculty_schedule')
 
 @login_required
 @require_POST
