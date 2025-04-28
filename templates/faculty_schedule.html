@@ -8,7 +8,6 @@
 {% block content %}
 <div class="schedule-container">
     <div class="schedule-header">
-        <h1>Schedule Management</h1>
         <button class="add-slot-btn" onclick="openAddSlotModal()">
             <i class="fas fa-plus"></i> Add Time Slot
         </button>
@@ -46,10 +45,9 @@
         </div>
 
         <div class="tab-content active" id="upcoming">
-            {% if time_slots %}
+            {% if open_slots %}
             <div class="time-slots">
-                {% for slot in time_slots %}
-                {% if not slot.is_booked %}
+                {% for slot in open_slots %}
                 <div class="time-slot-card" data-slot-id="{{ slot.id }}">
                     <div class="slot-info">
                         <div class="slot-info-item">
@@ -64,27 +62,26 @@
                             <i class="fas fa-door-open text-danger"></i>
                             Room {{ slot.room }}
                         </div>
-                        <div class="slot-status {% if slot.is_booked %}booked{% else %}available{% endif %}">
-                            <i class="fas fa-calendar-{% if slot.is_booked %}check{% else %}alt{% endif %} text-success"></i>
-                            {% if slot.is_booked %}Booked{% else %}Available{% endif %}
+                        <div class="slot-status available">
+                            <i class="fas fa-calendar-alt text-success"></i>
+                            Available
                         </div>
                     </div>
-                    {% if not slot.is_booked %}
                     <button type="button" class="delete-btn" onclick="deleteTimeSlot({{ slot.id }})">
                         <i class="fas fa-trash text-danger"></i>
                     </button>
-                    {% endif %}
                 </div>
-                {% endif %}
                 {% endfor %}
             </div>
             {% else %}
             <div class="no-slots">
                 <i class="fas fa-calendar-times"></i>
-                <p>No upcoming time slots available</p>
-                <button class="add-slot-btn" onclick="openAddSlotModal()">
-                    <i class="fas fa-plus"></i> Add Your First Time Slot
-                </button>
+                <p>No open appointment slots.</p>
+                <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
+                    <button class="add-slot-btn" onclick="openAddSlotModal()">
+                        <i class="fas fa-plus" style="color:white"></i> Add New Time Slot
+                    </button>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -93,32 +90,32 @@
             {% if time_slots %}
             <div class="time-slots">
                 {% for slot in time_slots %}
-                {% if slot.is_booked %}
-                <div class="time-slot-card reserved" data-slot-id="{{ slot.id }}">
+                {% if slot.is_booked and slot.appointment.status == 'Approved' %}
+                <div class="time-slot-card reserved approved" data-slot-id="{{ slot.id }}">
                     <div class="slot-info">
                         <div class="slot-info-item">
-                            <i class="fas fa-calendar text-danger"></i>
+                            <i class="fas fa-calendar text-success"></i>
                             {{ slot.date|date:"F d, Y" }}
                         </div>
                         <div class="slot-info-item">
-                            <i class="fas fa-clock text-danger"></i>
+                            <i class="fas fa-clock text-success"></i>
                             {{ slot.start_time|time:"g:i A" }} - {{ slot.end_time|time:"g:i A" }}
                         </div>
                         <div class="slot-info-item">
-                            <i class="fas fa-door-open text-danger"></i>
+                            <i class="fas fa-door-open text-success"></i>
                             Room {{ slot.room }}
                         </div>
                         <div class="slot-info-item">
-                            <i class="fas fa-user text-danger"></i>
+                            <i class="fas fa-user text-success"></i>
                             Student: {{ slot.appointment.student.get_full_name }}
                         </div>
                         {% if slot.appointment.reason %}
                         <div class="slot-info-item">
-                            <i class="fas fa-info-circle text-danger"></i>
+                            <i class="fas fa-info-circle text-success"></i>
                             Reason: {{ slot.appointment.reason }}
                         </div>
                         {% endif %}
-                        <div class="slot-status booked">
+                        <div class="slot-status booked approved-status">
                             <i class="fas fa-calendar-check text-success"></i>
                             Status: {{ slot.appointment.status }}
                         </div>
@@ -342,6 +339,23 @@ window.addEventListener('storage', function(e) {
     background-color: #dc3545;
     color: white;
     border-color: #dc3545;
+}
+
+.time-slot-card.reserved.approved {
+    border-left: 6px solid #28a745;
+    box-shadow: 0 2px 8px rgba(40,167,69,0.10);
+}
+.slot-info-item i.text-success {
+    color: #28a745 !important;
+}
+.slot-status.booked.approved-status {
+    background: #d4edda;
+    color: #155724;
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin-top: 10px;
+    font-weight: 600;
+    display: inline-block;
 }
 </style>
 {% endblock %} 

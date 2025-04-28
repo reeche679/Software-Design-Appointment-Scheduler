@@ -305,7 +305,7 @@ def faculty_dashboard(request):
         'todays_appointments': todays_appointments,
         'upcoming_appointments': upcoming_appointments,
         'time_slots': time_slots,
-        'pending_appointments': {'pending': pending_appointments},  # Wrapped in dict to match template expectations
+        'pending_appointments': pending_appointments,  # Pass the queryset directly
         'today': today,
     }
     return render(request, 'faculty_dashboard.html', context)
@@ -430,8 +430,12 @@ def faculty_schedule(request):
             slot.appointment = None
             slot.is_booked = False
 
+    # Create a list of open slots (not booked)
+    open_slots = [slot for slot in time_slots if not slot.is_booked]
+
     context = {
         'time_slots': time_slots,
+        'open_slots': open_slots,
         'today': timezone.now().date(),
     }
     return render(request, 'faculty_schedule.html', context)
@@ -679,45 +683,55 @@ def send_message(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 @login_required
+@require_POST
 def approve_appointment(request, appointment_id):
-    if request.method == 'POST':
-        try:
-            # Get the appointment and verify the faculty member is authorized
-            appointment = get_object_or_404(Appointment, id=appointment_id)
-            if appointment.time_slot.faculty != request.user:
-                messages.error(request, "You are not authorized to approve this appointment.")
-                return redirect('faculty_dashboard')
-            
-            # Update appointment status
-            appointment.status = 'Approved'
-            appointment.save()
-            
-            messages.success(request, f"Appointment with {appointment.student.get_full_name()} has been approved.")
-        except Exception as e:
-            messages.error(request, f"Error approving appointment: {str(e)}")
+    try:
+        # Get the appointment and verify the faculty member is authorized
+        appointment = get_object_or_404(Appointment, id=appointment_id)
+        if appointment.time_slot.faculty != request.user:
+            messages.error(request, "You are not authorized to approve this appointment.")
+            return redirect('faculty_dashboard')
+        
+        # Update appointment status
+        appointment.status = 'Approved'
+        appointment.save()
+        
+        # Update file status if there's an associated file
+        if appointment.student_file:
+            appointment.student_file.status = 'Approved'
+            appointment.student_file.save()
+        
+        messages.success(request, f"Appointment with {appointment.student.get_full_name()} has been approved.")
+    except Exception as e:
+        messages.error(request, f"Error approving appointment: {str(e)}")
     
     return redirect('faculty_dashboard')
 
 @login_required
+@require_POST
 def reject_appointment(request, appointment_id):
-    if request.method == 'POST':
-        try:
-            # Get the appointment and verify the faculty member is authorized
-            appointment = get_object_or_404(Appointment, id=appointment_id)
-            if appointment.time_slot.faculty != request.user:
-                messages.error(request, "You are not authorized to reject this appointment.")
-                return redirect('faculty_dashboard')
-            
-            # Update appointment status
-            appointment.status = 'Rejected'
-            appointment.save()
-            
-            # Make the time slot available again
-            appointment.time_slot.is_available = True
-            appointment.time_slot.save()
-            
-            messages.success(request, f"Appointment with {appointment.student.get_full_name()} has been rejected.")
-        except Exception as e:
-            messages.error(request, f"Error rejecting appointment: {str(e)}")
+    try:
+        # Get the appointment and verify the faculty member is authorized
+        appointment = get_object_or_404(Appointment, id=appointment_id)
+        if appointment.time_slot.faculty != request.user:
+            messages.error(request, "You are not authorized to reject this appointment.")
+            return redirect('faculty_dashboard')
+        
+        # Update appointment status
+        appointment.status = 'Rejected'
+        appointment.save()
+        
+        # Update file status if there's an associated file
+        if appointment.student_file:
+            appointment.student_file.status = 'Pending'
+            appointment.student_file.save()
+        
+        # Make the time slot available again
+        appointment.time_slot.is_available = True
+        appointment.time_slot.save()
+        
+        messages.success(request, f"Appointment with {appointment.student.get_full_name()} has been rejected.")
+    except Exception as e:
+        messages.error(request, f"Error rejecting appointment: {str(e)}")
     
     return redirect('faculty_dashboard')

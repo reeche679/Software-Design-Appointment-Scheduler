@@ -7,11 +7,13 @@ from .models import TimeSlot, Appointment, UserProfile, StudentFile, FileComment
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 import os
 from django.db.utils import IntegrityError
 from datetime import datetime, timedelta, date
 from django.utils import timezone
 from django.db.models import Count
+from django.views.decorators.http import require_POST
 
 def is_slot_expired(slot):
     """Check if a time slot is within 10 minutes of its end time"""
@@ -207,6 +209,7 @@ def book_appointment(request):
     except UserProfile.DoesNotExist:
         messages.error(request, 'User profile not found')
         return redirect('logout')
+    
 
 @login_required
 def faculty_interface(request):
@@ -283,66 +286,58 @@ def faculty_interface(request):
         return redirect('logout')
 
 @login_required
+@require_POST
 def approve_appointment(request, appointment_id):
     try:
-        user_profile = request.user.userprofile
-        if user_profile.user_type != 'faculty':
-            raise PermissionDenied
-        
+        # Get the appointment and verify the faculty member is authorized
         appointment = get_object_or_404(Appointment, id=appointment_id)
         if appointment.time_slot.faculty != request.user:
-            raise PermissionDenied
+            messages.error(request, "You are not authorized to approve this appointment.")
+            return redirect('faculty_dashboard')
         
         # Update appointment status
         appointment.status = 'Approved'
         appointment.save()
         
-        # Update file status
+        # Update file status if there's an associated file
         if appointment.student_file:
             appointment.student_file.status = 'Approved'
             appointment.student_file.save()
         
-        # Make the time slot appear available again
-        time_slot = appointment.time_slot
-        time_slot.is_available = True
-        time_slot.save()
-        
-        messages.success(request, 'Appointment approved successfully!')
-        return redirect('book_appointment')
-    except UserProfile.DoesNotExist:
-        messages.error(request, 'User profile not found')
-        return redirect('logout')
+        messages.success(request, f"Appointment with {appointment.student.get_full_name()} has been approved.")
+    except Exception as e:
+        messages.error(request, f"Error approving appointment: {str(e)}")
+    
+    return redirect('faculty_dashboard')
 
 @login_required
+@require_POST
 def reject_appointment(request, appointment_id):
     try:
-        user_profile = request.user.userprofile
-        if user_profile.user_type != 'faculty':
-            raise PermissionDenied
-        
+        # Get the appointment and verify the faculty member is authorized
         appointment = get_object_or_404(Appointment, id=appointment_id)
         if appointment.time_slot.faculty != request.user:
-            raise PermissionDenied
+            messages.error(request, "You are not authorized to reject this appointment.")
+            return redirect('faculty_dashboard')
         
-        # Update file status back to pending
+        # Update appointment status
+        appointment.status = 'Rejected'
+        appointment.save()
+        
+        # Update file status if there's an associated file
         if appointment.student_file:
             appointment.student_file.status = 'Pending'
             appointment.student_file.save()
         
-        # Make time slot available again
-        time_slot = appointment.time_slot
-        time_slot.is_available = True
-        time_slot.save()
+        # Make the time slot available again
+        appointment.time_slot.is_available = True
+        appointment.time_slot.save()
         
-        # Mark appointment as rejected instead of deleting
-        appointment.status = 'Rejected'
-        appointment.save()
-        
-        messages.success(request, 'Appointment rejected successfully!')
-        return redirect('book_appointment')
-    except UserProfile.DoesNotExist:
-        messages.error(request, 'User profile not found')
-        return redirect('logout')
+        messages.success(request, f"Appointment with {appointment.student.get_full_name()} has been rejected.")
+    except Exception as e:
+        messages.error(request, f"Error rejecting appointment: {str(e)}")
+    
+    return redirect('faculty_dashboard')
 
 @login_required
 def faculty_history(request):
@@ -557,3 +552,36 @@ def faculty_dashboard(request):
         'today': date.today(),
     }
     return render(request, 'faculty_dashboard.html', context)
+
+@login_required
+def add_time_slot(request):
+    if request.method == 'POST':
+        try:
+            user_profile = request.user.userprofile
+            if user_profile.user_type != 'faculty':
+                return JsonResponse({'status': 'error', 'message': 'Permission denied'})
+            
+            date = request.POST.get('date')
+            start_time = request.POST.get('start_time')
+            end_time = request.POST.get('end_time')
+            room = request.POST.get('room')
+            
+            if not all([date, start_time, end_time, room]):
+                return JsonResponse({'status': 'error', 'message': 'All fields are required'})
+            
+            time_slot = TimeSlot.objects.create(
+                faculty=request.user,
+                date=date,
+                start_time=start_time,
+                end_time=end_time,
+                room=room,
+                is_available=True
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Time slot added successfully'
+            })
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'User profile not found'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})

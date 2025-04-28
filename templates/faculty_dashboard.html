@@ -334,6 +334,148 @@
     .submit-btn:hover {
         background: #a01830;
     }
+
+    .appointments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .appointment-card {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(196,30,58,0.10);
+        padding: 20px;
+        border-left: 6px solid #C41E3A;
+        transition: box-shadow 0.2s, border-color 0.2s;
+        position: relative;
+    }
+    .appointment-card:hover {
+        box-shadow: 0 4px 16px rgba(196,30,58,0.18);
+        border-left: 8px solid #C41E3A;
+    }
+    .appointment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #f3d6db;
+        padding-bottom: 8px;
+    }
+    .appointment-header h3 {
+        color: #C41E3A;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        background: #f8d7da;
+        color: #C41E3A;
+        text-transform: capitalize;
+        border: 1px solid #C41E3A;
+    }
+    .status-badge.approved {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #d4edda;
+    }
+    .status-badge.pending {
+        background: #fff3cd;
+        color: #C41E3A;
+        border: 1px solid #C41E3A;
+    }
+    .appointment-body {
+        margin-top: 10px;
+    }
+    .appointment-info p {
+        margin: 0 0 6px 0;
+        color: #C41E3A;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .appointment-info p span {
+        color: #333;
+        font-weight: 400;
+    }
+    .no-appointments {
+        text-align: center;
+        color: #C41E3A;
+        padding: 30px 0;
+        font-size: 1.1rem;
+        background: #fff0f3;
+        border-radius: 10px;
+        border: 1px solid #f3d6db;
+    }
+    .improved-schedule {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(196,30,58,0.08);
+        padding: 32px 32px 24px 32px;
+        margin-bottom: 30px;
+    }
+    .schedule-title {
+        color: #C41E3A;
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+        letter-spacing: 0.5px;
+    }
+    .todays-appointments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin-top: 18px;
+    }
+    .todays-appointment-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(196,30,58,0.06);
+        padding: 18px 24px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+    .todays-appointment-time {
+        color: #C41E3A;
+        font-size: 1.3rem;
+        font-weight: 600;
+        min-width: 70px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .todays-appointment-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .todays-appointment-name {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #222;
+    }
+    .todays-appointment-room, .todays-appointment-reason {
+        font-size: 1rem;
+        color: #555;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .todays-appointment-room span, .todays-appointment-reason span {
+        color: #222;
+        font-weight: 500;
+    }
+    .no-todays-appointments {
+        color: #888;
+        font-size: 1.1rem;
+        text-align: center;
+        padding: 30px 0 10px 0;
+    }
 </style>
 {% endblock %}
 
@@ -387,26 +529,28 @@
         </div>
 
         <!-- Today's Schedule -->
-        <div class="schedule-section">
+        <div class="schedule-section improved-schedule">
             <div class="schedule-header">
-                <h2>Today's Schedule</h2>
+                <h2 class="schedule-title">Today's Schedule</h2>
                 <div class="schedule-date">{{ today|date:"l, F d, Y" }}</div>
             </div>
             {% if todays_appointments %}
-                <div class="appointments-list">
+                <div class="todays-appointments-list">
                     {% for appointment in todays_appointments %}
-                        <div class="appointment-item">
-                            <div class="appointment-time">{{ appointment.time_slot.start_time|time:"H:i" }}</div>
-                            <div class="appointment-details">
-                                <h3>{{ appointment.student.get_full_name }}</h3>
-                                <p>Room: {{ appointment.time_slot.room }}</p>
-                                <p>Reason: {{ appointment.reason }}</p>
+                        <div class="todays-appointment-card">
+                            <div class="todays-appointment-time">
+                                <i class="fas fa-clock"></i> {{ appointment.time_slot.start_time|time:"g:i A" }}
+                            </div>
+                            <div class="todays-appointment-details">
+                                <div class="todays-appointment-name">{{ appointment.student.get_full_name }}</div>
+                                <div class="todays-appointment-room"><i class="fas fa-door-open"></i> Room: <span>{{ appointment.time_slot.room }}</span></div>
+                                <div class="todays-appointment-reason"><i class="fas fa-info-circle"></i> Reason: <span>{{ appointment.reason }}</span></div>
                             </div>
                         </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <p>No appointments scheduled for today</p>
+                <div class="no-todays-appointments">No appointments scheduled for today</div>
             {% endif %}
         </div>
 
@@ -415,29 +559,42 @@
             <div class="tabs-header">
                 <button class="tab-button active" data-tab="pending">Pending Appointments</button>
                 <button class="tab-button" data-tab="upcoming">Upcoming Appointments</button>
-                <button class="tab-button" data-tab="timeslots">Time Slot Management</button>
-            </div>
+    </div>
 
             <div class="tab-content" id="pendingTab">
-                {% include 'faculty_interface.html' with appointments=pending_appointments only %}
-            </div>
+                {% include 'faculty_interface.html' with pending_appointments=pending_appointments only %}
+        </div>
             <div class="tab-content" id="upcomingTab" style="display: none;">
                 <div class="appointments-list">
-                    {% if upcoming_appointments %}
-                        {% for appointment in upcoming_appointments %}
-                            <div class="appointment-item">
+        {% if upcoming_appointments %}
+                    {% with non_rejected_appointments=upcoming_appointments|dictsort:"time_slot.date" %}
+                    {% for appointment in non_rejected_appointments %}
+                        {% if appointment.status != 'Rejected' %}
+                        <div class="appointment-card">
+                            <div class="appointment-header">
+                                <h3>{{ appointment.student.get_full_name }}</h3>
+                                <span class="status-badge {{ appointment.status|lower }}">{{ appointment.status }}</span>
+                            </div>
+                            <div class="appointment-body">
                                 <div class="appointment-info">
-                                    <h3>{{ appointment.student.get_full_name }}</h3>
                                     <p>Date: {{ appointment.time_slot.date|date:"F d, Y" }}</p>
                                     <p>Time: {{ appointment.time_slot.start_time|time:"g:i A" }} - {{ appointment.time_slot.end_time|time:"g:i A" }}</p>
                                     <p>Room: {{ appointment.time_slot.room }}</p>
-                                    <p>Status: {{ appointment.status }}</p>
                                 </div>
                             </div>
-                        {% endfor %}
-                    {% else %}
+                        </div>
+                        {% endif %}
+                    {% empty %}
+                        <div class="no-appointments">
+                            <p>No upcoming appointments</p>
+                        </div>
+                    {% endfor %}
+                    {% endwith %}
+                {% else %}
+                    <div class="no-appointments">
                         <p>No upcoming appointments</p>
-                    {% endif %}
+                    </div>
+                {% endif %}
                 </div>
             </div>
             <div class="tab-content" id="timeslotsTab" style="display: none;">
@@ -503,7 +660,6 @@ function showTimeSlotTab() {
     document.querySelector('.tabs-section').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Keep your existing JavaScript for tab switching
 document.addEventListener('DOMContentLoaded', function() {
     // Tab switching functionality
     const tabButtons = document.querySelectorAll('.tab-button');
@@ -522,6 +678,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Handle appointment approval/rejection
+    document.querySelectorAll('.approve-btn, .reject-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const action = this.classList.contains('approve-btn') ? 'approve' : 'reject';
+            const appointmentId = this.dataset.appointmentId;
+            
+            fetch(`/appointment/${appointmentId}/${action}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('An error occurred. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    });
+
     // Get the form
     const addSlotForm = document.querySelector('.add-slot-form');
     
@@ -530,29 +714,21 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(this);
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
             fetch('/add-time-slot/', {
                 method: 'POST',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': csrftoken
                 },
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Close the modal
                     closeAddSlotModal();
-                    
-                    // Show success message
                     alert(data.message);
-                    
-                    // Refresh the page to show new time slot
                     location.reload();
                 } else {
-                    // Show error message
                     alert(data.message || 'An error occurred');
                 }
             })
