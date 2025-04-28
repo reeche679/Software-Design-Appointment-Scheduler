@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static dict_get %}
 
 {% block extra_css %}
 <style>
@@ -246,6 +246,17 @@
         white-space: pre-wrap;
         word-break: break-word;
     }
+
+    .unread-badge {
+        display: inline-block;
+        background-color: #dc3545;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin-left: 6px;
+        font-weight: bold;
+    }
 </style>
 {% endblock %}
 
@@ -259,7 +270,12 @@
                 <img src="{% if faculty.user.profile_picture %}{{ faculty.user.profile_picture.url }}{% else %}{% static 'images/faculty.png' %}{% endif %}" 
                      class="faculty-avatar" alt="{{ faculty.user.get_full_name }}">
                 <div class="faculty-info">
-                    <div class="faculty-name">{{ faculty.user.get_full_name }}</div>
+                    <div class="faculty-name">
+                        {{ faculty.user.get_full_name }}
+                        {% if unread_by_faculty|dict_get:faculty.user.id > 0 %}
+                            <span class="unread-badge">{{ unread_by_faculty|dict_get:faculty.user.id }}</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             {% endif %}

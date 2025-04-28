@@ -138,7 +138,7 @@ def dashboard(request):
         'available_faculty': available_faculty,
         'recent_messages': recent_messages,
     }
-    return render(request, 'registration/dashboard.html', context)
+    return render(request, 'dashboard.html', context)
 
 @login_required
 def profile(request):
@@ -229,11 +229,18 @@ def messages_view(request):
         user_type='faculty'
     ).select_related('user')
     
+    # After you get available_faculty and student_messages
+    unread_by_faculty = {}
+    for faculty in available_faculty:
+        unread_count = student_messages.filter(faculty=faculty.user, is_read=False, sender_type='faculty').count()
+        unread_by_faculty[faculty.user.id] = unread_count
+
     context = {
         'messages': student_messages,
         'unread_count': student_messages.filter(is_read=False).count(),
         'available_faculty': available_faculty,
-        'selected_faculty_id': faculty_id
+        'selected_faculty_id': faculty_id,
+        'unread_by_faculty': unread_by_faculty,
     }
     return render(request, 'messages.html', context)
 
