@@ -585,3 +585,13 @@ def add_time_slot(request):
         except UserProfile.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'User profile not found'})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@login_required
+def student_schedule(request):
+    appointments = Appointment.objects.filter(
+        student=request.user,
+        status__in=['Pending', 'Approved']
+    ).order_by('-time_slot__date', '-time_slot__start_time')
+    return render(request, 'schedule.html', {
+        'appointments': appointments
+    })

@@ -2,169 +2,73 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/faculty_schedule.css' %}">
-<style>
-.tab-content {
-    display: none;
-}
-.tab-content.active {
-    display: block;
-}
-.schedule-tabs {
-    margin-bottom: 20px;
-}
-.tab-btn {
-    padding: 8px 16px;
-    margin-right: 10px;
-    border: 1px solid #ddd;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.tab-btn.active {
-    background-color: #dc3545;
-    color: white;
-    border-color: #dc3545;
-}
-.time-slot-card.reserved.approved {
-    border-left: 6px solid #28a745;
-    box-shadow: 0 2px 8px rgba(40,167,69,0.10);
-}
-.slot-info-item i.text-success {
-    color: #28a745 !important;
-}
-.slot-status.booked.approved-status {
-    background: #d4edda;
-    color: #155724;
-    border-radius: 4px;
-    padding: 6px 12px;
-    margin-top: 10px;
-    font-weight: 600;
-    display: inline-block;
-}
-</style>
+<link rel="stylesheet" href="{% static 'css/schedule.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="schedule-container">
-    <div class="calendar-section">
-        <div class="calendar-nav">
-            <button class="nav-btn" id="prevMonth">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <h2 id="currentMonth">April 2025</h2>
-            <button class="nav-btn" id="nextMonth">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-        <div class="calendar-grid">
-            <div class="calendar-days">
-                <div class="day-header">Sun</div>
-                <div class="day-header">Mon</div>
-                <div class="day-header">Tue</div>
-                <div class="day-header">Wed</div>
-                <div class="day-header">Thu</div>
-                <div class="day-header">Fri</div>
-                <div class="day-header">Sat</div>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Schedule</h1>
+        <a href="{% url 'book_appointment' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Appointment
+        </a>
+    </div>
+
+    <div class="calendar-container mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link" id="prevMonth">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h2 class="mx-4" id="currentMonth">April 2025</h2>
+                <button class="btn btn-link" id="nextMonth">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
-            <div id="calendarDays" class="calendar-dates"></div>
+            <div class="btn-group">
+                <button class="btn btn-primary active">Month</button>
+                <button class="btn btn-outline-primary">Week</button>
+                <button class="btn btn-outline-primary">Day</button>
+            </div>
+        </div>
+
+        <div class="calendar">
+            <div class="calendar-header">
+                <div>Sunday</div>
+                <div>Monday</div>
+                <div>Tuesday</div>
+                <div>Wednesday</div>
+                <div>Thursday</div>
+                <div>Friday</div>
+                <div>Saturday</div>
+            </div>
+            <div class="calendar-body" id="calendarGrid">
+                <!-- Calendar populated by JavaScript -->
+            </div>
         </div>
     </div>
-    <div class="schedule-content">
-        <div class="schedule-tabs">
-            <button class="tab-btn active" data-tab="upcoming">Upcoming Appointments</button>
-            <button class="tab-btn" data-tab="history">Appointment History</button>
-        </div>
-        <div class="tab-content active" id="upcoming">
-            {% if appointments %}
-            <div class="time-slots">
-                {% for appointment in appointments %}
-                {% if appointment.time_slot.date >= today %}
-                <div class="time-slot-card reserved" data-slot-id="{{ appointment.id }}">
-                    <div class="slot-info">
-                        <div class="slot-info-item">
-                            <i class="fas fa-calendar text-success"></i>
-                            {{ appointment.time_slot.date|date:"F d, Y" }}
-                        </div>
-                        <div class="slot-info-item">
-                            <i class="fas fa-clock text-success"></i>
-                            {{ appointment.time_slot.start_time|time:"g:i A" }} - {{ appointment.time_slot.end_time|time:"g:i A" }}
-                        </div>
-                        <div class="slot-info-item">
-                            <i class="fas fa-door-open text-success"></i>
-                            Room {{ appointment.time_slot.room }}
-                        </div>
-                        <div class="slot-info-item">
-                            <i class="fas fa-user text-success"></i>
-                            Faculty: {{ appointment.time_slot.faculty.get_full_name }}
-                        </div>
-                        {% if appointment.reason %}
-                        <div class="slot-info-item">
-                            <i class="fas fa-info-circle text-success"></i>
-                            Purpose: {{ appointment.reason }}
-                        </div>
-                        {% endif %}
-                        <div class="slot-status booked">
-                            <i class="fas fa-calendar-check text-success"></i>
-                            Status: {{ appointment.status }}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
+
+    <!-- Upcoming Appointments Section -->
+    <div class="upcoming-appointments-container">
+        <h2 class="upcoming-title">Upcoming Appointments</h2>
+        {% if appointments.approved %}
+            <ul class="simple-appointment-list">
+                {% for appointment in appointments.approved %}
+                    <li class="simple-appointment-item">
+                        <span><strong>{{ appointment.time_slot.date|date:"F d, Y" }}</strong></span> |
+                        <span>{{ appointment.time_slot.start_time|time:"g:i A" }} - {{ appointment.time_slot.end_time|time:"g:i A" }}</span> |
+                        <span>Room: {{ appointment.time_slot.room }}</span> |
+                        <span>Faculty: {{ appointment.time_slot.faculty.get_full_name }}</span> |
+                        <span>Status: <span class="status-approved">{{ appointment.status }}</span></span>
+                    </li>
                 {% endfor %}
-            </div>
-            {% else %}
+            </ul>
+        {% else %}
             <div class="no-slots">
                 <i class="fas fa-calendar-times"></i>
                 <p>No upcoming appointments</p>
             </div>
-            {% endif %}
-        </div>
-        <div class="tab-content" id="history">
-            {% if appointments %}
-            <div class="time-slots">
-                {% for appointment in appointments %}
-                {% if appointment.time_slot.date < today %}
-                <div class="time-slot-card reserved" data-slot-id="{{ appointment.id }}">
-                    <div class="slot-info">
-                        <div class="slot-info-item">
-                            <i class="fas fa-calendar text-success"></i>
-                            {{ appointment.time_slot.date|date:"F d, Y" }}
-                        </div>
-                        <div class="slot-info-item">
-                            <i class="fas fa-clock text-success"></i>
-                            {{ appointment.time_slot.start_time|time:"g:i A" }} - {{ appointment.time_slot.end_time|time:"g:i A" }}
-                        </div>
-                        <div class="slot-info-item">
-                            <i class="fas fa-door-open text-success"></i>
-                            Room {{ appointment.time_slot.room }}
-                        </div>
-                        <div class="slot-info-item">
-                            <i class="fas fa-user text-success"></i>
-                            Faculty: {{ appointment.time_slot.faculty.get_full_name }}
-                        </div>
-                        {% if appointment.reason %}
-                        <div class="slot-info-item">
-                            <i class="fas fa-info-circle text-success"></i>
-                            Purpose: {{ appointment.reason }}
-                        </div>
-                        {% endif %}
-                        <div class="slot-status booked">
-                            <i class="fas fa-calendar-check text-success"></i>
-                            Status: {{ appointment.status }}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="no-slots">
-                <i class="fas fa-calendar-times"></i>
-                <p>No appointment history</p>
-            </div>
-            {% endif %}
-        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -237,7 +141,6 @@
     padding: 0.375rem 1rem;
 }
 
-/* New styles for Upcoming Appointments */
 .upcoming-appointments-container {
     background: white;
     border-radius: 8px;
@@ -252,122 +155,108 @@
     font-weight: 600;
 }
 
-.no-appointments {
+.no-slots {
     text-align: center;
     color: #6c757d;
     padding: 20px;
     font-size: 16px;
 }
 
-.appointments-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.appointment-item {
-    border-left: 4px solid #007bff;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-}
-
-.appointment-item h4 {
+.simple-appointment-list {
+    list-style: none;
+    padding: 0;
     margin: 0;
-    color: #2c3e50;
-    font-size: 18px;
-    font-weight: 500;
 }
 
-.appointment-item p {
-    margin: 5px 0 0;
-    color: #6c757d;
-    font-size: 14px;
+.simple-appointment-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 1rem;
+    color: #333;
+}
+
+.status-approved {
+    color: #28a745;
+    font-weight: 600;
 }
 </style>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Calendar functionality
-    const currentDate = new Date();
-    let currentMonth = currentDate.getMonth();
-    let currentYear = currentDate.getFullYear();
+    const calendarGrid = document.getElementById('calendarGrid');
+    const currentMonthElement = document.getElementById('currentMonth');
+    const prevMonthButton = document.getElementById('prevMonth');
+    const nextMonthButton = document.getElementById('nextMonth');
+    
+    // Initialize to April 2025 (months are 0-based in JavaScript)
+    let currentDate = new Date(2025, 3, 1);
 
     function updateCalendar() {
-        const firstDay = new Date(currentYear, currentMonth, 1);
-        const lastDay = new Date(currentYear, currentMonth + 1, 0);
-        const startingDay = firstDay.getDay();
-        const monthLength = lastDay.getDate();
-
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
         // Update month display
         const monthNames = ["January", "February", "March", "April", "May", "June",
-                          "July", "August", "September", "October", "November", "December"];
-        document.getElementById('currentMonth').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            "July", "August", "September", "October", "November", "December"];
+        currentMonthElement.textContent = `${monthNames[month]} ${year}`;
 
-        // Clear existing calendar
-        const calendarDays = document.getElementById('calendarDays');
-        calendarDays.innerHTML = '';
+        // Clear previous calendar
+        calendarGrid.innerHTML = '';
 
-        // Add empty cells for days before start of month
-        for (let i = 0; i < startingDay; i++) {
-            const emptyDay = document.createElement('div');
-            emptyDay.className = 'calendar-day empty';
-            calendarDays.appendChild(emptyDay);
+        // Get first day of month and total days
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const totalDays = lastDay.getDate();
+        const startingDay = firstDay.getDay();
+
+        // Get last days of previous month
+        const prevMonthLastDay = new Date(year, month, 0).getDate();
+
+        // Add previous month's days
+        for (let i = startingDay - 1; i >= 0; i--) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-date other-month';
+            cell.innerHTML = `<span class="date-number">${prevMonthLastDay - i}</span>`;
+            calendarGrid.appendChild(cell);
         }
 
-        // Add days of the month
-        for (let i = 1; i <= monthLength; i++) {
-            const dayElement = document.createElement('div');
-            dayElement.className = 'calendar-day';
-            dayElement.innerHTML = `
-                <span class="date">${i}</span>
-                <div class="day-slots"></div>
-            `;
-            calendarDays.appendChild(dayElement);
+        // Add current month's days
+        const today = new Date();
+        for (let i = 1; i <= totalDays; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-date';
+            if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+                cell.classList.add('today');
+            }
+            cell.innerHTML = `<span class="date-number">${i}</span>`;
+            calendarGrid.appendChild(cell);
+        }
+
+        // Add next month's days
+        const remainingCells = 42 - (startingDay + totalDays);
+        for (let i = 1; i <= remainingCells; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-date other-month';
+            cell.innerHTML = `<span class="date-number">${i}</span>`;
+            calendarGrid.appendChild(cell);
         }
     }
 
+    // Event listeners for navigation
+    prevMonthButton.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        updateCalendar();
+    });
+
+    nextMonthButton.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        updateCalendar();
+    });
+
     // Initialize calendar
     updateCalendar();
-
-    // Month navigation
-    document.getElementById('prevMonth').addEventListener('click', function() {
-        if (currentMonth === 0) {
-            currentMonth = 11;
-            currentYear--;
-        } else {
-            currentMonth--;
-        }
-        updateCalendar();
-    });
-
-    document.getElementById('nextMonth').addEventListener('click', function() {
-        if (currentMonth === 11) {
-            currentMonth = 0;
-            currentYear++;
-        } else {
-            currentMonth++;
-        }
-        updateCalendar();
-    });
-
-    // Tab switching
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remove active class from all buttons and contents
-            tabBtns.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            // Add active class to clicked button and corresponding content
-            this.classList.add('active');
-            const tabId = this.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
-        });
-    });
 });
 </script>
-{% endblock %} 
+{% endblock %}
