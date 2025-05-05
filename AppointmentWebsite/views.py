@@ -595,3 +595,28 @@ def student_schedule(request):
     return render(request, 'schedule.html', {
         'appointments': appointments
     })
+
+def dashboard(request):
+    user = request.user
+    today = timezone.localdate()
+    week_later = today + timedelta(days=7)
+
+    # Filter appointments for the logged-in student
+    todays_appointments = Appointment.objects.filter(
+        student=user,
+        time_slot__date=today
+    )
+    upcoming_appointments = Appointment.objects.filter(
+        student=user,
+        time_slot__date__gt=today,
+        time_slot__date__lte=week_later
+    )
+
+    context = {
+        'todays_appointments': todays_appointments,
+        'todays_appointments_count': todays_appointments.count(),
+        'upcoming_appointments': upcoming_appointments,
+        'weekly_appointments_count': upcoming_appointments.count(),
+        # ... other context variables ...
+    }
+    return render(request, 'dashboard.html', context)

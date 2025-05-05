@@ -117,11 +117,24 @@ def dashboard(request):
     except UserProfile.DoesNotExist:
         return redirect('edit_profile')
 
-    # Get user's upcoming appointments
+    # Get user's upcoming appointments (only Approved)
     upcoming_appointments = Appointment.objects.filter(
         student=request.user,
-        time_slot__date__gte=timezone.now().date()
+        time_slot__date__gte=timezone.now().date(),
+        status='Approved'
     ).select_related('time_slot', 'time_slot__faculty').order_by('time_slot__date', 'time_slot__start_time')[:5]
+
+    # Get pending appointments
+    pending_appointments = Appointment.objects.filter(
+        student=request.user,
+        status='Pending'
+    ).select_related('time_slot', 'time_slot__faculty').order_by('time_slot__date', 'time_slot__start_time')
+
+    # Get appointment history (past appointments)
+    appointment_history = Appointment.objects.filter(
+        student=request.user,
+        time_slot__date__lt=timezone.now().date()
+    ).select_related('time_slot', 'time_slot__faculty').order_by('-time_slot__date', '-time_slot__start_time')
 
     # Get available faculty members
     available_faculty = UserProfile.objects.filter(
@@ -135,6 +148,8 @@ def dashboard(request):
 
     context = {
         'upcoming_appointments': upcoming_appointments,
+        'pending_appointments': pending_appointments,
+        'appointment_history': appointment_history,
         'available_faculty': available_faculty,
         'recent_messages': recent_messages,
     }
@@ -193,16 +208,25 @@ def schedule(request):
         return redirect('edit_profile')
 
     # Get student's appointments
-    appointments = Appointment.objects.filter(student=request.user).select_related(
+    all_appointments = Appointment.objects.filter(student=request.user).select_related(
         'time_slot', 'time_slot__faculty'
     ).order_by('time_slot__date', 'time_slot__start_time')
 
+    # Only approved and future appointments for the upcoming section
+    approved_upcoming_appointments = all_appointments.filter(
+        status='Approved',
+        time_slot__date__gte=timezone.now().date()
+    )
+
     # Create a set of dates that have appointments
-    appointment_dates = set(appointment.time_slot.date for appointment in appointments)
+    appointment_dates = set(appointment.time_slot.date for appointment in all_appointments)
     
     context = {
         'appointment_dates': appointment_dates,
         'today': timezone.now().date(),
+        'appointments': {
+            'approved': approved_upcoming_appointments,
+        },
     }
     return render(request, 'schedule.html', context)
 
